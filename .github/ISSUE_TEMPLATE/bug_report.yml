@@ -1,0 +1,59 @@
+name: Bug 报告
+description: 数据接口、MCP、安装或 Skills 行为异常
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请先运行 `bash scripts/check.sh` 与（如适用）`LIVE=1 bash scripts/smoke_live.sh`。
+        勿粘贴 Cookie / Token。
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 期望行为 vs 实际行为
+    validations:
+      required: true
+
+  - type: input
+    id: command
+    attributes:
+      label: 复现命令或 Cursor 指令
+      placeholder: "例如：python scripts/em.py get_realtime_quote --secid 1.600519"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 影响范围
+      options:
+        - MCP / eastmoney-stock
+        - CLI (scripts/em.py)
+        - 雪球 / Cookie
+        - install.sh / 环境
+        - Skills / /stock 报告
+        - CI
+        - 其他
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 环境
+      description: OS、Python 版本、Cursor/Claude 版本
+      value: |
+        OS:
+        Python:
+        分支/commit:
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 错误输出
+      render: shell

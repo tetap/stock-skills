@@ -1,0 +1,46 @@
+name: 功能建议
+description: 新工具、Skill 流程或文档改进
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        路由类需求请先对照 [AGENTS.md](https://github.com/tetap/stock-skills/blob/master/AGENTS.md) 是否已有入口。
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 要解决什么问题？
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议方案
+      description: 命令、工具名、Skill 流程等
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 范围
+      options:
+        - 新 MCP/CLI 工具
+        - stock-main 报告流程
+        - 单维 slash 命令
+        - 量化 / 回测
+        - 文档 only
+        - 其他
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: compliance
+    attributes:
+      label: 合规确认
+      options:
+        - label: 理解输出须含「仅供参考，不构成投资建议」
+          required: true

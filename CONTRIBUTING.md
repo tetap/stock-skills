@@ -25,6 +25,8 @@ LIVE=1 bash scripts/smoke_live.sh  # 改接口层时建议跑
 
 CI 会在 push/PR 时自动跑 `test.yml`（Python 3.12 + `requirements.lock`）。
 
+PR 与 Issue 模板：`.github/pull_request_template.md`、`.github/ISSUE_TEMPLATE/`。
+
 ---
 
 ## 常见改动 checklist

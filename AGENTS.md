@@ -111,6 +111,11 @@ bash scripts/lock_deps.sh                              # 更新 requirements.loc
 - 可选：`live-smoke.yml`（定时接口监测）
 - Release：打 `v*` tag → 附 `models/alpha158_lgb.*`
 
+## GitHub
+
+- PR 模板：`.github/pull_request_template.md`
+- Issue：Bug / 功能建议（`.github/ISSUE_TEMPLATE/`）
+
 ---
 
 ## 禁止
