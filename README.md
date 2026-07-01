@@ -8,7 +8,7 @@
 
 > **免责声明**：数据仅供参考，不构成任何投资建议。
 
-[变更记录](CHANGELOG.md) · [贡献](CONTRIBUTING.md) · [安全](SECURITY.md) · [Agent 指南](AGENTS.md)
+[变更记录](CHANGELOG.md) · [路线图](ROADMAP.md) · [贡献](CONTRIBUTING.md) · [安全](SECURITY.md) · [Agent 指南](AGENTS.md)
 
 ---
 
@@ -468,7 +468,7 @@ export EASTMONEY_DISABLE_FALLBACK=1   # 禁用降级
 ## 测试
 
 ```bash
-# 单元测试（默认，CI 同款，86 项）
+# 单元测试（默认，CI 同款，92 项）
 bash scripts/test.sh
 
 # 发布前完整检查（测试 + MCP parity）

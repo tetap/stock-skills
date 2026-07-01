@@ -14,10 +14,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Extract release notes from CHANGELOG
+        run: bash scripts/release_notes.sh "${{ github.ref_name }}" > /tmp/release_body.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          generate_release_notes: true
+          body_path: /tmp/release_body.md
           files: |
             models/alpha158_lgb.txt
             models/alpha158_lgb.metrics.json

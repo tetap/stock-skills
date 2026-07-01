@@ -44,6 +44,22 @@ class TestLiveSmoke(unittest.TestCase):
             self.assertFalse(oos["oos_passed"])
             self.assertIn("oos_warning", result["quant_verdict"])
 
+    def test_kline_daily(self) -> None:
+        rows = run_tool(
+            "get_kline",
+            secid="1.600519",
+            period="daily",
+            limit=5,
+        )
+        self.assertIsInstance(rows, list)
+        self.assertGreater(len(rows), 0)
+        self.assertIn("close", rows[0])
+
+    def test_company_profile(self) -> None:
+        result = run_tool("get_company_profile", secid="1.600519")
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result.get("code"), "600519")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -82,11 +82,32 @@ PR 与 Issue 模板：`.github/pull_request_template.md`、`.github/ISSUE_TEMPLA
 
 ## 发布
 
+打 tag 会触发 `.github/workflows/release.yml`：从 [CHANGELOG.md](CHANGELOG.md) 提取对应版本说明，并附上 `models/alpha158_lgb.*`。
+
 ```bash
-git tag v0.1.0 && git push origin v0.1.0
+# 1. 更新 CHANGELOG（[Unreleased] → [x.y.z] - 日期）
+bash scripts/check.sh
+
+# 2. 打 tag 并推送
+git tag v0.1.1 && git push origin v0.1.1
 ```
 
-`.github/workflows/release.yml` 会将 `models/alpha158_lgb.*` 附到 GitHub Release。
+本地预览 Release 正文：
+
+```bash
+bash scripts/release_notes.sh v0.1.0
+```
+
+可选：安装 [GitHub CLI](https://cli.github.com/) 后手动创建/编辑 Release（CI 已自动创建时通常不必）：
+
+```bash
+brew install gh   # macOS；Windows: winget install GitHub.cli
+gh auth login
+gh release view v0.1.0
+gh release edit v0.1.0 --notes-file /tmp/notes.md
+```
+
+见 [ROADMAP.md](ROADMAP.md) 了解下一版本计划。
 
 ---
 

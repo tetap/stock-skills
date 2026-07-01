@@ -1,6 +1,14 @@
 # Changelog
 
-格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。
+格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。路线图见 [ROADMAP.md](ROADMAP.md)。
+
+## [Unreleased]
+
+### 计划
+
+- Release 正文从 CHANGELOG 自动提取（见 `scripts/release_notes.sh`）
+- 扩展 live smoke（K 线、公司概况）
+- v0.1.1 文档与量化演示流程对齐
 
 ## [0.1.0] - 2026-07-01
 

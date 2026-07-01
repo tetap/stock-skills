@@ -26,7 +26,10 @@ GOVERNANCE_DOCS = (
     ROOT / "CONTRIBUTING.md",
     ROOT / "SECURITY.md",
     ROOT / "CHANGELOG.md",
+    ROOT / "ROADMAP.md",
 )
+
+RELEASE_NOTES_SCRIPT = ROOT / "scripts" / "release_notes.sh"
 
 
 class TestProjectGovernance(unittest.TestCase):
@@ -44,6 +47,21 @@ class TestProjectGovernance(unittest.TestCase):
     def test_governance_docs_present(self) -> None:
         for path in GOVERNANCE_DOCS:
             self.assertTrue(path.is_file(), str(path.relative_to(ROOT)))
+
+    def test_release_notes_extracts_version(self) -> None:
+        self.assertTrue(RELEASE_NOTES_SCRIPT.is_file())
+        import subprocess
+
+        proc = subprocess.run(
+            ["bash", str(RELEASE_NOTES_SCRIPT), "v0.1.0"],
+            capture_output=True,
+            text=True,
+            check=False,
+            cwd=ROOT,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn("36 个 MCP", proc.stdout)
+        self.assertIn("OOS 未通过", proc.stdout)
 
 
 if __name__ == "__main__":
