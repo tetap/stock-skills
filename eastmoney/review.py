@@ -92,7 +92,7 @@ def get_review_protocol(*, flow: str = "B") -> dict[str, Any]:
             "get_market_snapshot",
         ]
         base["rounds"] = [
-            {"id": "R0", "name": "快讯+板块+资金", "required": ["flash/headline/xueqiu_hot", "概念+行业 overview"]},
+            {"id": "R0", "name": "快讯+板块+资金", "required": ["flash/headline", "概念+行业 overview"]},
             {"id": "R3", "name": "热点持续性"},
             {"id": "R4", "name": "新闻-板块-资金交叉"},
             {"id": "R6", "name": "门禁", "output_section": "§7 审核纪要"},

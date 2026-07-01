@@ -72,36 +72,6 @@ class TestLiveSmoke(unittest.TestCase):
         self.assertEqual(proto["flow"], "C")
         self.assertIn("search_sectors", proto["required_tools"])
 
-    def test_xueqiu_hot_no_auth(self) -> None:
-        rows = run_tool(
-            "get_market_news",
-            news_type="xueqiu_hot",
-            source="xueqiu",
-            limit=5,
-        )
-        self.assertIsInstance(rows, list)
-        self.assertGreater(len(rows), 0)
-
-
-XUEQIU_TOKEN = os.getenv("XUEQIU_TOKEN", "").strip()
-
-
-@unittest.skipUnless(LIVE and XUEQIU_TOKEN, "需要 LIVE=1 且 XUEQIU_TOKEN")
-class TestLiveXueqiuAuth(unittest.TestCase):
-    def test_xueqiu_auth_status(self) -> None:
-        status = run_tool("get_xueqiu_auth_status")
-        self.assertTrue(status.get("authenticated"))
-
-    def test_xueqiu_livenews(self) -> None:
-        rows = run_tool(
-            "get_market_news",
-            news_type="xueqiu_livenews",
-            source="xueqiu",
-            limit=5,
-        )
-        self.assertIsInstance(rows, list)
-        self.assertGreater(len(rows), 0)
-
 
 if __name__ == "__main__":
     unittest.main()

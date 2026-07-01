@@ -23,7 +23,7 @@ flowchart TB
   end
 
   subgraph data [数据层]
-    MCP[mcp_server 36 tools]
+    MCP[mcp_server 33 tools]
     EM[eastmoney Python]
     FB[AkShare fallback]
   end
@@ -45,7 +45,7 @@ flowchart TB
 
 | 路径 | 作用 |
 |------|------|
-| `eastmoney/` | 东方财富 + 雪球 + 量化数据实现 |
+| `eastmoney/` | 东方财富 + 量化数据实现 |
 | `mcp_server/` | Cursor MCP `eastmoney-stock` |
 | `scripts/em.py` | 无 AI 时的 CLI |
 | `agent-skills/` | 13 个分析 workflow（含 `stock-main`） |
@@ -88,10 +88,10 @@ flowchart TB
 
 ## 数据工具约定
 
-- 共 **36** 个 MCP/CLI 工具；列表：`python scripts/em.py list`
+- 共 **33** 个 MCP/CLI 工具；列表：`python scripts/em.py list`
 - 任意分析前先 `resolve_symbol`
 - secid：沪 `1.{code}`，深/北 `0.{code}`
-- 雪球：`xueqiu_hot` 免登录；`xueqiu_livenews`/帖子需浏览器 Cookie；`interrupt` → 引导登录 hq 页
+- 舆情/快讯：`get_news_and_reports`（东财 + 新浪）；`get_flash_news` / `get_headline_news`
 - `get_quant_technical` 含 `oos_status`；**quant 非 guaranteed 策略信号**
 - 东财失败 → AkShare 降级（K 线训练/回测用 `get_kline_resilient`）
 

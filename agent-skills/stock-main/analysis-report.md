@@ -90,7 +90,6 @@
 | `get_news_and_reports` | code, news, limit 10, **source=all**, stock_name |
 | `get_news_and_reports` | code, announcement, limit 5 |
 | `get_market_news` | flash, limit 20, **source=all** |
-| `get_market_news` | xueqiu_livenews 或 flash+source=xueqiu（热门资讯需 Cookie） |
 | `get_market_news` | flash, keyword=行业词, limit 10 |
 | `get_sector_detail` | 从 profile 行业名, members 或 fund_flow |
 | `get_dragon_tiger` | code, limit 5（有则写，无则跳过） |
@@ -110,7 +109,7 @@
 
 > **策略 vs 研究**：`quant_verdict` 是实时因子解读，**不等于**通过样本外回测的策略信号。若 `oos_status.oos_passed` 为 `false` 或 `null`，或 `quant_verdict.oos_warning` 存在，§3 须标注「量化信号未过样本外检验，仅辅助」，评级上限「右侧等待」。Walk-forward / `backtest_quant.py` 结果仅用于研究备忘，**不得**直接写入 §1 交易计划。
 
-**§5 事件与板块** 必须写：个股新闻 2 条 + 市场热点/情绪 1~2 条 + **雪球讨论热度排名**（若有）。
+**§5 事件与板块** 必须写：个股新闻 2 条 + 市场热点/情绪 1~2 条。
 
 ---
 
@@ -134,7 +133,7 @@
 | 基本面 | {如：Q1 净利同比 -79%，PE TTM 588×，业绩与市值严重脱节} |
 | 技术面 | {如：27.34 元，低于 MA20/60，近 6 月回撤 32%} |
 | 资金面 | {如：当日主力 -5270 万，近 5 日…} |
-| 情绪面 | {如：雪球讨论榜 #118；锂电并购热点但个股非龙头} |
+| 情绪面 | {如：锂电并购热点但个股非龙头} |
 
 ### 交易计划
 
@@ -183,7 +182,7 @@
 |------|------|-------------------|
 
 - 新闻/公告要点 2 条
-- 市场热点/雪球热度 1~2 条
+- 市场热点 1~2 条
 - 板块内地位：{龙头/跟风/独立逻辑}
 
 ## 6. 风险与反面论证

@@ -65,7 +65,7 @@ description: >-
 2. 拉 7×24 快讯、要闻、板块排行、大盘/个股资金
 3. 交叉提炼主线；过 [review-protocol.md](review-protocol.md) **D 流程三轮** + 审核纪要
 
-**雪球帖子/热门资讯**：先 `get_xueqiu_auth_status`；若 `authenticated: false` 或返回 `interrupt` → 提示用户在 Chrome/Safari 打开 https://xueqiu.com/hq 登录（自动读 Cookie，**无需**手动复制 token，除非 MCP 权限导致持续失败）。
+**新闻/舆情**：`get_market_news`（flash/headline，`--source all`）+ `get_news_and_reports`；东财 + 新浪合并。
 
 ---
 

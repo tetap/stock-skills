@@ -14,7 +14,6 @@ alwaysApply: false
 ## 惯例
 
 - K 线批量/训练用 `get_kline_resilient`（AkShare 降级）
-- 雪球鉴权失败 → `XueqiuAuthRequired` 或 `format_tool_result` 的 `status: auth_required`
 - 限流：`EastMoneyClient(min_interval=0.6)`；训练脚本可用更慢间隔
 
 ## 测试

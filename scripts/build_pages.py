@@ -21,7 +21,6 @@ NAV = [
     ("install", "安装"),
     ("usage", "用法"),
     ("cli", "CLI"),
-    ("xueqiu", "雪球"),
 ]
 
 PAGES: list[tuple[str, Path]] = [
@@ -29,7 +28,6 @@ PAGES: list[tuple[str, Path]] = [
     ("install", CONTENT / "install.md"),
     ("usage", CONTENT / "usage.md"),
     ("cli", CONTENT / "cli.md"),
-    ("xueqiu", ROOT / "docs" / "xueqiu-auth.md"),
 ]
 
 
@@ -129,7 +127,6 @@ def build() -> None:
         "install": "安装",
         "usage": "用法",
         "cli": "CLI",
-        "xueqiu": "雪球授权",
     }
 
     for page_id, src in PAGES:

@@ -1,7 +1,7 @@
 import unittest
 
 from eastmoney.review import get_review_protocol
-from eastmoney.tools import TOOL_NAMES, format_tool_result, run_tool
+from eastmoney.tools import TOOL_NAMES, run_tool
 
 
 class TestReviewProtocol(unittest.TestCase):
@@ -29,16 +29,9 @@ class TestReviewProtocol(unittest.TestCase):
         self.assertIn("get_market_news", proto["required_tools"])
 
 
-class TestFormatToolResult(unittest.TestCase):
-    def test_interrupt_adds_status(self) -> None:
-        out = format_tool_result({"interrupt": True, "reason": "missing_token"})
-        self.assertEqual(out["status"], "auth_required")
-        self.assertTrue(out["interrupt"])
-
-
 class TestToolCount(unittest.TestCase):
     def test_tool_names_count(self) -> None:
-        self.assertEqual(len(TOOL_NAMES), 36)
+        self.assertEqual(len(TOOL_NAMES), 33)
         self.assertIn("get_review_protocol", TOOL_NAMES)
         self.assertIn("get_alpha158_score", TOOL_NAMES)
 

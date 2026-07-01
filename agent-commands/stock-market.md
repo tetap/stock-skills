@@ -9,7 +9,7 @@
 ## 你要做的
 
 1. **stock-main** D 流程 + [market-brief.md](../agent-skills/stock-main/market-brief.md)
-2. 拉快讯/板块排行/资金/xueqiu_hot（见模板工具表）
+2. 拉快讯/板块排行/资金（见模板工具表）
 3. `get_review_protocol(flow=D)` → 输出含审核纪要的简报
 4. 末尾免责声明
 

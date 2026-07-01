@@ -19,6 +19,6 @@ argument-hint: "[查价 / 分析 / 板块 / 热点 + 内容]"
 
 1. **stock-main** 路由 + 对应模板（analysis / sector / market-brief）
 2. 个股分析：**工具 ≥20 次** → `get_review_protocol(flow=B|C|D)` → review-protocol 门禁 → **7 节终稿（含 §7 审核纪要）**
-3. **新闻情绪必拉** `get_market_news`（flash/xueqiu_livenews/xueqiu_hot，`source=all|xueqiu`，可加 keyword）
+3. **新闻情绪必拉** `get_market_news`（flash/headline，`source=all|eastmoney|sina`，可加 keyword）
 4. 简洁报告，禁止顾问角色、禁止只拉 2 个工具
 5. `quant_verdict` 为研究辅助，不等于 OOS 回测策略信号

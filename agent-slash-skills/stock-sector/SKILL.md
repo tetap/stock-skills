@@ -20,6 +20,6 @@ argument-hint: "[板块名称，或 今日/热点/推荐几只]"
 ## 必做（选股场景）
 
 1. 工具 **≥12 次** + 候选股轻扫
-2. `get_market_news`（flash + keyword + xueqiu_hot）
+2. `get_market_news`（flash + keyword）
 3. `get_review_protocol(flow=C)` → §6 审核纪要
 4. 末尾免责声明

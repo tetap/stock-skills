@@ -28,7 +28,7 @@ bash scripts/install.sh --target cursor --scope user
 
 首次克隆后运行 `bash scripts/install.sh --target cursor`，会自动生成本地 `.cursor/mcp.json`（已 gitignore，勿提交绝对路径）。
 
-模板见 `.cursor/mcp.json.example`。在 Cursor 设置中启用 MCP 后，模型可直接调用 `eastmoney-stock` 下的 **36 个工具**。
+模板见 `.cursor/mcp.json.example`。在 Cursor 设置中启用 MCP 后，模型可直接调用 `eastmoney-stock` 下的 **33 个工具**。
 
 重启 Cursor 或刷新 MCP 后生效。MCP 命令：
 
@@ -142,7 +142,7 @@ bash scripts/test.sh
 - 深交所/北交所：`0.{6位代码}`（如 `0.000001`）
 - 不确定时先调 `resolve_symbol`
 
-## 36 个工具
+## 33 个工具
 
 | 工具 | 主要参数 |
 |------|----------|
@@ -158,8 +158,8 @@ bash scripts/test.sh
 | get_shareholder_count | --code, --limit |
 | get_major_events | --code, --limit |
 | get_dragon_tiger | --code, --limit |
-| get_news_and_reports | --code, --content-type, --limit, --source all\|xueqiu |
-| get_market_news | --news-type flash/headline/xueqiu_livenews/xueqiu_hot/…, --source all\|xueqiu, --keyword, --limit |
+| get_news_and_reports | --code, --content-type, --limit, --source all\|eastmoney\|sina |
+| get_market_news | --news-type flash/headline/breakfast/sina_roll/sina_live, --source all\|eastmoney\|sina, --keyword, --limit |
 | get_stock_fund_flow | --secid, --limit |
 | get_fund_flow_rank | --limit |
 | get_market_fund_flow | --limit |
@@ -173,9 +173,6 @@ bash scripts/test.sh
 | get_limit_up_gene | --secid, --code |
 | get_short_term_monitor | --code |
 | get_limit_up_history | --code, --limit |
-| get_xueqiu_auth_guide | --reason |
-| get_xueqiu_auth_status | （检测 Cookie / 浏览器） |
-| get_xueqiu_data | --code, --data-type report/capital_flow/quote/…, --limit |
 | get_alpha360_tensor | --secid, --seq-len, --include-tensor |
 | get_alpha360_score | --secid |
 | get_alpha158_factors | --secid, --include-all-factors |

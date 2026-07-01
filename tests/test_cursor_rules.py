@@ -31,9 +31,7 @@ GOVERNANCE_DOCS = (
     ROOT / "ROADMAP.md",
 )
 
-GUIDE_DOCS = (
-    ROOT / "docs" / "xueqiu-auth.md",
-)
+GUIDE_DOCS: tuple[Path, ...] = ()
 
 README_ASSETS = (
     ROOT / "docs" / "assets" / "banner.png",
@@ -78,7 +76,7 @@ class TestProjectGovernance(unittest.TestCase):
             cwd=ROOT,
         )
         self.assertEqual(proc.returncode, 0, proc.stderr)
-        self.assertIn("36 个 MCP", proc.stdout)
+        self.assertIn("MCP", proc.stdout)
         self.assertIn("OOS 未通过", proc.stdout)
 
 

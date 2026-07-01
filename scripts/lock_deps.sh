@@ -9,7 +9,7 @@ if [[ ! -x .venv/bin/pip ]]; then
   exit 1
 fi
 
-PKGS=(requests pandas akshare curl_cffi mcp pysnowball browser-cookie3)
+PKGS=(requests pandas akshare curl_cffi mcp)
 ML=false
 while [[ $# -gt 0 ]]; do
   case "$1" in

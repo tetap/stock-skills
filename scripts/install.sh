@@ -243,7 +243,7 @@ install_python_deps() {
   fi
 
   echo "[python] 依赖就绪: $pyexe"
-  "$pyexe" -c "import browser_cookie3, pysnowball, mcp; print('[python] 校验: browser-cookie3 / pysnowball / mcp OK')" \
+  "$pyexe" -c "import mcp; print('[python] 校验: mcp OK')" \
     || echo "[python] 警告: 部分包导入失败，请检查上方 pip 输出" >&2
 }
 

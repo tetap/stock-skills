@@ -18,8 +18,7 @@ alwaysApply: true
 
 ## 数据
 
-- 先 `resolve_symbol`；36 工具见 `python scripts/em.py list`
-- 雪球 `interrupt` / `auth_required` → 引导登录 xueqiu.com/hq，勿编造
+- 先 `resolve_symbol`；33 工具见 `python scripts/em.py list`
 - `quant_verdict` / Alpha158/360 为研究辅助，看 `oos_status.oos_passed`
 
 ## 禁止

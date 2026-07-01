@@ -32,6 +32,5 @@ LIVE=1 bash scripts/smoke_live.sh
 
 ## 相关文档
 
-- [雪球授权](xueqiu.html)
 - [GitHub 仓库](https://github.com/tetap/stock-skills)
 - [Releases](https://github.com/tetap/stock-skills/releases)

@@ -31,9 +31,6 @@ from eastmoney.short_term import get_limit_up_history, get_short_term_monitor
 from eastmoney.signals import get_indicator_interpretation, get_limit_up_gene
 from eastmoney.symbols import resolve_symbol, search_stocks
 from eastmoney.review import get_review_protocol
-from eastmoney.xueqiu import xueqiu_auth_guide, xueqiu_auth_status
-from eastmoney.xueqiu_auth import XueqiuAuthRequired
-from eastmoney.xueqiu_pysnowball import SUPPORTED_TYPES, fetch_xueqiu_data
 
 _client: EastMoneyClient | None = None
 
@@ -195,23 +192,6 @@ def _run_primary(name: str, **kwargs: Any) -> Any:
         return get_short_term_monitor(client, kwargs["code"])
     if name == "get_limit_up_history":
         return get_limit_up_history(client, kwargs["code"], limit=int(kwargs.get("limit", 10)))
-    if name == "get_xueqiu_auth_guide":
-        return xueqiu_auth_guide(reason=kwargs.get("reason", "missing_token"))
-    if name == "get_xueqiu_auth_status":
-        try_browser = kwargs.get("try_browser", True)
-        if isinstance(try_browser, str):
-            try_browser = try_browser.lower() in {"1", "true", "yes"}
-        return xueqiu_auth_status(try_browser=bool(try_browser))
-    if name == "get_xueqiu_data":
-        tb = kwargs.get("try_browser", True)
-        if isinstance(tb, str):
-            tb = tb.lower() in {"1", "true", "yes"}
-        return fetch_xueqiu_data(
-            kwargs["code"],
-            kwargs.get("data_type", "report"),
-            limit=int(kwargs.get("limit", 10)),
-            try_browser=bool(tb),
-        )
     if name == "get_review_protocol":
         return get_review_protocol(flow=kwargs.get("flow", "B"))
     if name == "get_alpha360_tensor":
@@ -293,12 +273,7 @@ def _try_fallback(name: str, kwargs: dict[str, Any], primary_error: Exception | 
 
 
 def format_tool_result(result: Any) -> Any:
-    """统一 MCP/CLI 可读结构；interrupt 时附加 status 字段。"""
-    if isinstance(result, dict) and result.get("interrupt"):
-        return {
-            "status": "auth_required",
-            **result,
-        }
+    """统一 MCP/CLI 可读结构。"""
     return result
 
 
@@ -316,8 +291,6 @@ def run_tool(name: str, **kwargs: Any) -> Any:
             if fb is not None and not _is_empty_result(name, fb):
                 return fb
         return format_tool_result(result)
-    except XueqiuAuthRequired as auth_exc:
-        return format_tool_result(auth_exc.to_dict())
     except Exception as primary_error:
         fb = _try_fallback(name, kwargs, primary_error)
         if fb is not None:
@@ -353,9 +326,6 @@ TOOL_NAMES = [
     "get_limit_up_gene",
     "get_short_term_monitor",
     "get_limit_up_history",
-    "get_xueqiu_auth_guide",
-    "get_xueqiu_auth_status",
-    "get_xueqiu_data",
     "get_alpha360_tensor",
     "get_alpha360_score",
     "get_alpha158_factors",

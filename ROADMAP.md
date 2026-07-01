@@ -18,7 +18,6 @@ Release 说明自动化、live smoke 扩展、OOS 门槛校验、`check.ps1`、K
 | **GluonTS 分位数** | 🟢 P10/P50/P90 + uncertainty 写入 `quant_verdict` |
 | **OOS 通过的可选模型** | 🟡 `models/optional/` + `ALPHA158_OPT_IN` 文档；Release artifact 待训出 |
 | **板块/热点** | 🟢 C/D `required_tools`；`search_sectors` 回归单测 |
-| **雪球** | 🟢 [docs/xueqiu-auth.md](docs/xueqiu-auth.md)；live smoke + 可选 `XUEQIU_TOKEN` |
 | **Windows CI** | 🟢 `test.yml` → `windows-latest` + `check.ps1` |
 
 ---
@@ -35,7 +34,7 @@ Release 说明自动化、live smoke 扩展、OOS 门槛校验、`check.ps1`、K
 
 - 高频交易、实盘下单
 - 投资顾问角色模块（已废弃）
-- 保证第三方接口（东方财富/雪球）长期稳定
+- 保证第三方接口（东方财富等）长期稳定
 
 ---
 

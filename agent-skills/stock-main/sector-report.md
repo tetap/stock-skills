@@ -44,7 +44,7 @@
 |------|------|
 | `get_market_news` | flash, limit 30, source=all |
 | `get_market_news` | flash, keyword=板块词, limit 15 |
-| `get_market_news` | xueqiu_hot, limit 10, source=xueqiu |
+| `get_market_news` | flash, keyword=板块名, limit 10, source=all |
 | `get_market_fund_flow` | limit 10 |
 | `get_fund_flow_rank` | limit 20 |
 
@@ -77,7 +77,7 @@
 |------|------|
 | 板块趋势 | 近 5/20/60 日（K 线） |
 | 资金 | 板块主力 + 大盘背景 |
-| 情绪 | 2~3 条快讯 + 雪球热榜是否含板块龙头 |
+| 情绪 | 2~3 条快讯是否含板块龙头 |
 | 策略 | {跟龙头 / 挖低位补涨 / 不参与} |
 
 ## 2. 板块走势

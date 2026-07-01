@@ -1,11 +1,8 @@
 # 锁定主依赖版本（可复现安装）
 # 重新生成: bash scripts/lock_deps.sh
-# CI 与本地均可用: pip install -r requirements.lock
 
-requests==2.34.2
-pandas==3.0.3
 akshare==1.18.64
 curl_cffi==0.15.0
 mcp==1.28.1
-pysnowball==0.1.8
-browser-cookie3==0.20.1
+pandas==3.0.3
+requests==2.34.2

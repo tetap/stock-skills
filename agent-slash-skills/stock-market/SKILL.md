@@ -14,7 +14,7 @@ argument-hint: "[今天热点 / 情绪 / 留空]"
 
 ## 必做
 
-1. 工具见 market-brief.md（快讯 + 板块 + 资金 + xueqiu_hot）
+1. 工具见 market-brief.md（快讯 + 板块 + 资金）
 2. `get_review_protocol(flow=D)` → 审核纪要
 3. §1 给可验证判断，禁止空泛「有热点」
 4. 末尾免责声明

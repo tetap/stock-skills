@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### 移除
+
+- **雪球接口全面下线**：删除 `xueqiu_*` 模块与 MCP 工具（`get_xueqiu_auth_*`、`get_xueqiu_data`）；舆情改由东财 + 新浪；工具数 36 → 33
+- 依赖移除：`pysnowball`、`browser-cookie3`；文档 `docs/xueqiu-auth.md`
+
 ### 新增
 
 - **Walk-forward 回测**：`eastmoney/walk_forward.py` + `scripts/walk_forward_quant.py`（滚动 OOS fold）

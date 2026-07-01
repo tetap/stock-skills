@@ -9,7 +9,7 @@
 - §1 必须是 **可验证的判断**：「情绪偏热但结构分化」优于「市场有热点」
 - 每个热点主题写 **驱动因素 + 受益板块 + 持续性（1 日/1 周/更长）**
 - 「可关注方向」改为 **「今日主线排序」**，给 2~4 条带优先级的主题，不是泛泛列表
-- 必须交叉：快讯 + 板块涨幅 + 资金净流入 + 雪球讨论热榜
+- 必须交叉：快讯 + 板块涨幅 + 资金净流入
 
 ---
 
@@ -19,7 +19,6 @@
 |------|------|
 | `get_market_news` | flash, limit 30, source=all |
 | `get_market_news` | headline, limit 15 |
-| `get_market_news` | xueqiu_hot, limit 15, source=xueqiu |
 | `get_sector_overview` | concept, limit 15 |
 | `get_sector_overview` | industry, limit 15 |
 | `get_market_fund_flow` | limit 10 |
@@ -52,7 +51,7 @@
 
 ## 4. 板块与资金
 
-| 概念 Top5 | 行业 Top5 | 主力净流入方向 | 雪球讨论 Top3 |
+| 概念 Top5 | 行业 Top5 | 主力净流入方向 |
 
 ## 5. 策略提示
 

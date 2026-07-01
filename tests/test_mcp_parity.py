@@ -29,9 +29,9 @@ class TestMcpToolParity(unittest.TestCase):
             f"TOOLS only: {sorted(tool_names - mcp_tools)}",
         )
 
-    def test_count_is_36(self) -> None:
-        self.assertEqual(len(TOOL_NAMES), 36)
-        self.assertEqual(len(_mcp_tool_names()), 36)
+    def test_count_is_33(self) -> None:
+        self.assertEqual(len(TOOL_NAMES), 33)
+        self.assertEqual(len(_mcp_tool_names()), 33)
 
 
 if __name__ == "__main__":

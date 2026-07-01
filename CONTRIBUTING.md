@@ -31,8 +31,6 @@ PR 与 Issue 模板：`.github/pull_request_template.md`、`.github/ISSUE_TEMPLA
 
 安全漏洞：见 [SECURITY.md](SECURITY.md)（勿在公开 Issue 粘贴 Cookie/Token）。
 
-雪球登录与 Agent 暂停流程：见 [docs/xueqiu-auth.md](docs/xueqiu-auth.md)。
-
 ---
 
 ## 常见改动 checklist
@@ -71,7 +69,7 @@ PR 与 Issue 模板：`.github/pull_request_template.md`、`.github/ISSUE_TEMPLA
 |------|------|
 | `.cursor/mcp.json` | 含本机绝对路径，已 gitignore |
 | `.venv/` | 本地环境 |
-| 密钥 / Cookie / `XUEQIU_TOKEN` | 安全 |
+| 密钥 / Cookie | 安全 |
 
 模板：`.cursor/mcp.json.example`
 

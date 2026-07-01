@@ -133,11 +133,11 @@ def get_news_and_reports(
     content_type: Annotated[str, Field(description="news/announcement/report")] = "news",
     limit: Annotated[int, Field(ge=1, le=30)] = 10,
     source: Annotated[
-        str, Field(description="eastmoney=东财搜索, sina=新浪筛选, xueqiu=雪球热度, all=合并(默认)")
+        str, Field(description="eastmoney=东财搜索, sina=新浪筛选, all=合并(默认)")
     ] = "all",
-    stock_name: Annotated[str, Field(description="股票简称，新浪/雪球筛选时使用")] = "",
+    stock_name: Annotated[str, Field(description="股票简称，新浪筛选时使用")] = "",
 ) -> str:
-    """【舆情】个股新闻/公告/研报。新闻已改用东财搜索 API，可合并新浪 7×24 与雪球讨论热度。"""
+    """【舆情】个股新闻/公告/研报。新闻已改用东财搜索 API，可合并新浪 7×24。"""
     kwargs: dict[str, Any] = {
         "code": code,
         "content_type": content_type,
@@ -216,15 +216,15 @@ def compare_performance(
 def get_market_news(
     news_type: Annotated[
         str,
-        Field(description="flash/headline/breakfast/sina_roll/sina_live/xueqiu_hot/xueqiu_livenews"),
+        Field(description="flash/headline/breakfast/sina_roll/sina_live"),
     ] = "flash",
     keyword: Annotated[str, Field(description="标题/摘要关键词过滤，如 电池、半导体")] = "",
     limit: Annotated[int, Field(ge=1, le=50)] = 20,
     source: Annotated[
-        str, Field(description="eastmoney/sina/xueqiu/all，flash 默认 all 合并东财+新浪+雪球热榜")
+        str, Field(description="eastmoney/sina/all，flash 默认 all 合并东财+新浪")
     ] = "all",
 ) -> str:
-    """【舆情】市场快讯/要闻；source=all 合并东财+新浪+雪球热榜；xueqiu_livenews 需浏览器 Cookie。"""
+    """【舆情】市场快讯/要闻；source=all 合并东财+新浪。"""
     kwargs: dict[str, Any] = {"news_type": news_type, "limit": limit, "source": source}
     if keyword:
         kwargs["keyword"] = keyword
@@ -318,40 +318,6 @@ def get_limit_up_history(
 ) -> str:
     """【短线】涨跌停历史明细（RPT_INTSELECTION_LIMITUP）。"""
     return _dump(run_tool("get_limit_up_history", code=code, limit=limit))
-
-
-@mcp.tool()
-def get_xueqiu_auth_guide(
-    reason: Annotated[
-        str,
-        Field(description="missing_token=未配置, auth_failed=凭证失效, blocked=WAF拦截"),
-    ] = "missing_token",
-) -> str:
-    """【舆情】雪球登录引导；在 Chrome/Safari 打开 https://xueqiu.com/hq 登录即可（自动读 Cookie）。"""
-    return _dump(run_tool("get_xueqiu_auth_guide", reason=reason))
-
-
-@mcp.tool()
-def get_xueqiu_auth_status(
-    try_browser: Annotated[bool, Field(description="是否尝试从 Chrome/Safari 读取 Cookie")] = True,
-) -> str:
-    """【舆情】检测雪球 Cookie 是否可用（环境变量 / 浏览器）。"""
-    return _dump(run_tool("get_xueqiu_auth_status", try_browser=try_browser))
-
-
-@mcp.tool()
-def get_xueqiu_data(
-    code: Code,
-    data_type: Annotated[
-        str,
-        Field(
-            description="report|earningforecast|capital_flow|capital_history|margin|blocktrans|quote|pankou"
-        ),
-    ] = "report",
-    limit: Annotated[int, Field(ge=1, le=50)] = 10,
-) -> str:
-    """【舆情/数据】pysnowball 雪球接口：研报、盈利预测、资金流向、行情等（需登录 Cookie）。"""
-    return _dump(run_tool("get_xueqiu_data", code=code, data_type=data_type, limit=limit))
 
 
 @mcp.tool()

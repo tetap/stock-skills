@@ -54,7 +54,7 @@ R2 数据审计 · R6 置信度门禁
 flowchart TB
   C[Cursor MCP] --> MAIN[stock-main]
   CL[Claude /stock] --> MAIN
-  MAIN --> MCP[mcp_server 36 tools]
+  MAIN --> MCP[mcp_server 33 tools]
   MCP --> EM[东方财富]
   EM --> AK[AkShare 降级]
 ```

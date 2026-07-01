@@ -13,7 +13,7 @@ bash scripts/install.sh --target all --scope project  # 项目级
 | `agent-commands/` | Cursor `/stock` 等命令 |
 | `agent-slash-skills/` | Claude/Codex slash |
 | `.venv/` | Python + MCP Server |
-| `.cursor/mcp.json` | Cursor 36 工具 MCP |
+| `.cursor/mcp.json` | Cursor 33 工具 MCP |
 
 ## Cursor 专用
 
@@ -24,7 +24,7 @@ bash scripts/install.sh --target cursor --scope user
 ### 启用 MCP
 
 1. 运行上述安装（生成 `.cursor/mcp.json`）
-2. **Cursor → Settings → MCP** → 确认 `eastmoney-stock`（36 tools）
+2. **Cursor → Settings → MCP** → 确认 `eastmoney-stock`（33 tools）
 3. 未出现：**Reload MCP** 或重启 Cursor
 4. 必须用 Cursor **打开本仓库**（MCP 路径写在项目内）
 

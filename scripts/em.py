@@ -31,21 +31,10 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--board-name")
     parser.add_argument("--sort", default="change_pct")
     parser.add_argument("--indicators", help="逗号分隔，如 ma")
-    parser.add_argument("--news-type", default="flash", choices=["flash", "headline", "breakfast", "sina_roll", "sina_live", "xueqiu_hot", "xueqiu_livenews"])
+    parser.add_argument("--news-type", default="flash", choices=["flash", "headline", "breakfast", "sina_roll", "sina_live"])
     parser.add_argument("--keyword", help="资讯关键词过滤，如 电池、新能源")
-    parser.add_argument("--source", default="all", choices=["eastmoney", "sina", "xueqiu", "all"])
-    parser.add_argument("--stock-name", help="个股简称，新浪/雪球筛选时使用")
-    parser.add_argument(
-        "--reason",
-        default="missing_token",
-        choices=["missing_token", "auth_failed", "blocked"],
-        help="get_xueqiu_auth_guide 失败原因类型",
-    )
-    parser.add_argument(
-        "--data-type",
-        default="report",
-        help="get_xueqiu_data: report|capital_flow|quote|...",
-    )
+    parser.add_argument("--source", default="all", choices=["eastmoney", "sina", "all"])
+    parser.add_argument("--stock-name", help="个股简称，新浪筛选时使用")
     parser.add_argument(
         "--seq-len",
         type=int,
@@ -67,12 +56,6 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
         default="B",
         choices=["B", "C", "D", "b", "c", "d"],
         help="get_review_protocol 流程：B=个股 / C=板块 / D=市场简报",
-    )
-    parser.add_argument(
-        "--try-browser",
-        action=argparse.BooleanOptionalAction,
-        default=None,
-        help="get_xueqiu_auth_status / get_xueqiu_data 是否尝试读浏览器 Cookie",
     )
 
 
@@ -114,13 +97,10 @@ def main() -> int:
             "keyword": args.keyword,
             "source": args.source,
             "stock_name": args.stock_name,
-            "reason": args.reason,
-            "data_type": args.data_type,
             "seq_len": args.seq_len,
             "include_tensor": args.include_tensor or None,
             "include_all_factors": args.include_all_factors or None,
             "flow": args.flow.upper() if args.flow else None,
-            "try_browser": args.try_browser,
         }.items()
         if v is not None
     }

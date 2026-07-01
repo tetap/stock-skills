@@ -32,7 +32,6 @@ body:
       options:
         - MCP / eastmoney-stock
         - CLI (scripts/em.py)
-        - 雪球 / Cookie
         - install.sh / 环境
         - Skills / /stock 报告
         - CI
