@@ -256,12 +256,15 @@ python scripts/em.py get_realtime_quote --secid 1.600519
 |------|-----------------|-------|------|
 | **主命令** | **`/stock`** | **`$stock`** | **`/stock 分析 贵州茅台`** |
 | 全面分析（别名） | `/stock-analyze` | `$stock-analyze` | 同 `/stock 分析` |
+| 市场热点/情绪 | `/stock-market` | `$stock-market` | `/stock-market 今天热点` |
 | 资金面 | `/stock-fund` | `$stock-fund` | `/stock-fund 600519` |
 | 筹码 | `/stock-chip` | `$stock-chip` | `/stock-chip 比亚迪` |
 | K 线 | `/stock-kline` | `$stock-kline` | `/stock-kline 招商银行` |
 | 基本面 | `/stock-basic` | `$stock-basic` | `/stock-basic 五粮液` |
 | 板块 | `/stock-sector` | `$stock-sector` | `/stock-sector 半导体` |
 | 事件 | `/stock-news` | `$stock-news` | `/stock-news 隆基绿能` |
+
+专项命令（fund/chip/kline/basic）**只输出单维度**，不走 review-protocol；要买卖建议用 **`/stock 分析`**。
 
 ---
 
@@ -271,11 +274,11 @@ python scripts/em.py get_realtime_quote --secid 1.600519
 |------|------|------|
 | 个股全量分析 | `/stock 分析 600519` | analysis-report.md |
 | 板块 + 选股 | `/stock 电池板块走势，推荐几只` | sector-report.md |
-| 热点 / 情绪 | `/stock 今天有什么热点` | market-brief.md |
+| 热点 / 情绪 | `/stock 今天有什么热点` 或 `/stock-market` | market-brief.md |
 
 ### 个股分析
 
-分析时 **尽量拉全 MCP/CLI 工具（≥20 次）**，再写 **6 节简洁报告**。
+分析时 **尽量拉全 MCP/CLI 工具（≥20 次）**，再写 **7 节终稿（含 §7 审核纪要）**。
 
 模板见 [`agent-skills/stock-main/analysis-report.md`](agent-skills/stock-main/analysis-report.md)。
 
@@ -288,7 +291,7 @@ python scripts/em.py get_realtime_quote --secid 1.600519
 | **资金筹码** | 个股/大盘资金流、筹码分布 |
 | **事件舆情** | 大事提醒、个股新闻/公告、**7×24 快讯**、板块成分、龙虎榜 |
 
-### 报告结构（6 节）
+### 报告结构（7 节）
 
 1. **结论与近期操作** — 看几日线、操作倾向、介入区间、确认/回避条件  
 2. 基本面与估值  
@@ -296,6 +299,7 @@ python scripts/em.py get_realtime_quote --secid 1.600519
 4. 资金与筹码  
 5. 事件与板块（含 **情绪热点**）  
 6. 主要风险  
+7. **§7 审核纪要**（review-protocol 门禁输出）
 
 ### 用法示例
 

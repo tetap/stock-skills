@@ -17,7 +17,7 @@
    - 查价 → quick-lookup
    - 个股 → analysis-report.md（≥20 次工具）
    - 板块+选股 → sector-report.md（≥12 次 + 候选股轻扫）
-   - 热点/情绪 → market-brief.md
+   - 热点/情绪 → market-brief.md（或 Cursor `/stock-market`）
 2. **新闻情绪必拉**：`get_market_news`（flash/xueqiu_livenews/xueqiu_hot，`--source all|xueqiu`，可加 keyword）
 3. **审核**：拉数后调用 `get_review_protocol(flow=B|C|D)`，按 review-protocol 过门禁再出终稿
 4. 输出简洁报告（表格为主），§1 给可操作建议；**禁止顾问角色**

@@ -1,0 +1,4 @@
+interface:
+  display_name: "市场热点"
+policy:
+  allow_implicit_invocation: false
