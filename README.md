@@ -452,10 +452,14 @@ export EASTMONEY_DISABLE_FALLBACK=1   # 禁用降级
 ## 测试
 
 ```bash
+# 单元测试（默认，CI 同款，84 项）
 bash scripts/test.sh
+
+# 真实接口冒烟（需网络，默认不在 CI 跑）
+LIVE=1 bash scripts/smoke_live.sh
 ```
 
-GitHub Actions 在 push/PR 到 `master` 时自动运行相同测试（见 `.github/workflows/test.yml`）。
+GitHub Actions 在 push/PR 到 `master` 时自动运行 `test.sh`（见 `.github/workflows/test.yml`）。另有一个 **可选** 的定时真实接口冒烟 `live-smoke.yml`（`continue-on-error: true`，接口异常时不阻塞主 CI）。
 
 ---
 

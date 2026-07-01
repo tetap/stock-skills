@@ -35,6 +35,10 @@ usage() {
 
 默认会自动：创建 .venv → pip install -r requirements.txt → 同步 .cursor/mcp.json
 
+脚本:
+  scripts/smoke_live.sh       真实接口冒烟（LIVE=1，本地/发布前）
+  scripts/train_demo_model.sh 训练演示 LGB 权重到 models/
+
 示例:
   bash scripts/install.sh --target all
   bash scripts/install.sh --target claude --what slash

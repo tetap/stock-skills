@@ -1,0 +1,27 @@
+name: live-smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 工作日北京时间约 10:00（UTC 02:00）
+    - cron: "0 2 * * 1-5"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -q --upgrade pip wheel
+          .venv/bin/pip install -q -r requirements.txt
+
+      - name: Live API smoke
+        run: bash scripts/smoke_live.sh
