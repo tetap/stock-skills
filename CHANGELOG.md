@@ -20,6 +20,7 @@
 ### 变更
 
 - **`analysis-report.md`**：§3 补充 `timeseries_forecast.quantiles` 字段说明与宽区间写作要求
+- **雪球 WAF**：完整浏览器 Cookie + query API；WAF 时返回讨论热度 + 滑动验证提示（不再误报「未登录」）
 - **`ROADMAP.md`**：v0.2.0 标记 walk-forward 与 GluonTS 分位数已完成
 - **`quant_verdict` 合成 DeepAR/TFT**：158/360/时序三维共振、分歧降置信、统一 `oos_warning`
 - **`build_quant_verdict(ts_forecast=)`** 纳入时序模型分数与 OOS 状态

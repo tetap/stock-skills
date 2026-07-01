@@ -19,6 +19,7 @@ from eastmoney.xueqiu_auth import (
     XUEQIU_LOGIN_URL,
     XueqiuAuthRequired,
     build_cookie_string,
+    jar_to_cookie_string,
     load_browser_cookies,
     resolve_xueqiu_cookie,
 )
@@ -30,6 +31,12 @@ class TestXueqiuAuth(unittest.TestCase):
         self.assertEqual(
             build_cookie_string("abc123", "u42"),
             "xq_a_token=abc123;u=u42;",
+        )
+
+    def test_jar_to_cookie_string(self) -> None:
+        self.assertEqual(
+            jar_to_cookie_string({"xq_a_token": "a", "device_id": "d"}),
+            "xq_a_token=a;device_id=d;",
         )
 
     @patch("eastmoney.xueqiu_auth._load_cookie_cache", return_value=(None, None))
@@ -163,6 +170,43 @@ class TestXueqiu(unittest.TestCase):
             with patch("eastmoney.xueqiu._pysnowball_available", return_value=False):
                 rows = xueqiu_stock_sentiment(client, "002074", limit=3)
         self.assertEqual(rows[0]["provider"], "xueqiu_auth_hint")
+
+    @patch("eastmoney.xueqiu._xq_session_get_json")
+    def test_posts_waf_returns_hint_not_raise(self, mock_get: MagicMock) -> None:
+        mock_get.return_value = (None, "waf_captcha")
+        client = MagicMock()
+        with patch("eastmoney.xueqiu.resolve_xueqiu_cookie", return_value=("xq_a_token=abc;", "browser:chrome")):
+            rows, reason = xueqiu_stock_posts(client, "600519", require_auth=False)
+        self.assertEqual(rows, [])
+        self.assertEqual(reason, "waf_captcha")
+
+    @patch("eastmoney.xueqiu.xueqiu_stock_posts", return_value=([], "waf_captcha"))
+    @patch("eastmoney.xueqiu.xueqiu_stock_heat")
+    def test_sentiment_waf_includes_heat_and_hint(self, mock_heat: MagicMock, _mock_posts: MagicMock) -> None:
+        mock_heat.return_value = {
+            "symbol": "SH600519",
+            "name": "贵州茅台",
+            "metric": 83474,
+            "tweet_rank": 2,
+            "price": 1193.0,
+            "change_pct": 0.6,
+        }
+        client = MagicMock()
+        with patch("eastmoney.xueqiu.resolve_xueqiu_cookie", return_value=("xq_a_token=abc;", "browser:chrome")):
+            with patch("eastmoney.xueqiu._pysnowball_available", return_value=False):
+                rows = xueqiu_stock_sentiment(client, "600519", limit=3, include_auth_hint=True)
+        providers = [r["provider"] for r in rows]
+        self.assertIn("xueqiu_heat", providers)
+        self.assertIn("xueqiu_waf_hint", providers)
+        self.assertFalse(rows[-1]["interrupt"])
+
+    def test_waf_auth_message(self) -> None:
+        exc = XueqiuAuthRequired(
+            reason="waf_captcha",
+            detail="请在 Chrome 打开 https://xueqiu.com/S/SH600519 完成滑动验证。",
+        )
+        self.assertIn("滑动验证", exc.user_message)
+        self.assertIn("已检测到", exc.user_message)
 
     @patch("eastmoney.xueqiu_auth.load_browser_cookies", return_value=({}, "browser_not_logged_in"))
     @patch("eastmoney.xueqiu_auth._load_cookie_cache", return_value=(None, None))

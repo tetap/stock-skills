@@ -178,9 +178,14 @@ def get_news_and_reports(
                     )
                 )
             except XueqiuAuthRequired as exc:
-                if source == "xueqiu":
+                if source == "xueqiu" and exc.reason not in {"waf_captcha", "blocked"}:
                     raise
-                groups.append([xueqiu_auth_hint_row(reason=exc.reason)])
+                from eastmoney.xueqiu import code_to_xq_symbol, xueqiu_auth_hint_row, xueqiu_waf_hint_row
+
+                if exc.reason in {"waf_captcha", "blocked"}:
+                    groups.append([xueqiu_waf_hint_row(symbol=code_to_xq_symbol(code), code=code)])
+                else:
+                    groups.append([xueqiu_auth_hint_row(reason=exc.reason)])
         rows = merge_news_rows(*groups, limit=limit) if len(groups) > 1 else (groups[0] if groups else [])
         if rows:
             return rows

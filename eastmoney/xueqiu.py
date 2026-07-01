@@ -19,6 +19,8 @@ from eastmoney.xueqiu_auth import (
 
 XUEQIU_SCREENER_URL = "https://xueqiu.com/service/v5/stock/screener/screen"
 XUEQIU_LIVENEWS_URL = "https://xueqiu.com/statuses/livenews/list.json"
+XUEQIU_STOCK_STATUS_URL = "https://xueqiu.com/query/v1/symbol/search/status"
+XUEQIU_STOCK_TIMELINE_URL = "https://xueqiu.com/statuses/stock_timeline.json"
 # category=6：雪球热门资讯（hq 页「热门」流）
 XUEQIU_LIVENEWS_HOT_CATEGORY = 6
 
@@ -53,7 +55,8 @@ def xueqiu_auth_guide(*, reason: str = "missing_token") -> dict[str, Any]:
     reason_text = {
         "missing_token": f"未检测到雪球 Cookie（{XUEQIU_COOKIE_NAME}）。",
         "auth_failed": f"已配置 {XUEQIU_TOKEN_ENV}，但雪球返回未授权或凭证失效。",
-        "blocked": "雪球接口被 WAF 拦截，通常登录并更新 Cookie 后可恢复。",
+        "blocked": "雪球接口被 WAF 拦截（滑动验证），登录 hq 后仍需在个股页完成验证。",
+        "waf_captcha": "已检测到登录 Cookie，但个股讨论 API 触发滑动验证。",
     }.get(reason, "雪球接口需要有效登录凭证。")
 
     return {
@@ -74,9 +77,30 @@ def xueqiu_auth_guide(*, reason: str = "missing_token") -> dict[str, Any]:
             "保持浏览器登录状态，直接重试 get_market_news / get_xueqiu_data（会自动读 Cookie）。",
             "若仍失败：macOS 给 Cursor「完全磁盘访问权限」后重启 Cursor；CLI 能读 Cookie 而 MCP 不能时属权限差异。",
             "可选兜底：export XUEQIU_TOKEN='xq_a_token值'（仅 CI 或无浏览器环境需要）。",
+            "个股深度帖：若 authenticated 为 true 仍失败，请在 Chrome 打开 https://xueqiu.com/S/{代码} 完成滑动验证。",
             "诊断：python scripts/em.py get_xueqiu_auth_status",
         ],
         "note": "热榜无需登录；热门资讯/帖子/研报会自动读浏览器 Cookie。",
+    }
+
+
+def xueqiu_waf_hint_row(*, symbol: str, code: str) -> dict[str, Any]:
+    """已登录但个股 API 被 WAF 拦截时的提示行（不中断整次分析）。"""
+    stock_url = f"https://xueqiu.com/S/{symbol}"
+    return {
+        "time": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "title": f"雪球个股讨论需通过滑动验证：{stock_url}",
+        "summary": (
+            "已检测到登录 Cookie，但程序化请求个股帖子被雪球 WAF 拦截。"
+            f"请在 Chrome 打开 {stock_url} 手动完成滑动验证后重试；"
+            "讨论热度/热门资讯仍可正常使用。"
+        ),
+        "provider": "xueqiu_waf_hint",
+        "url": stock_url,
+        "auth_required": False,
+        "interrupt": False,
+        "reason": "waf_captcha",
+        "code": code.zfill(6),
     }
 
 
@@ -107,20 +131,60 @@ def _pysnowball_available() -> bool:
         return False
 
 
-def _xq_headers(referer: str = XUEQIU_LOGIN_URL) -> dict[str, str]:
-    cookie, _ = resolve_xueqiu_cookie(try_browser=True)
+def _xq_headers(referer: str = XUEQIU_LOGIN_URL, *, cookie: str | None = None) -> dict[str, str]:
+    if cookie is None:
+        cookie, _ = resolve_xueqiu_cookie(try_browser=True)
     headers = {
         **HEADERS,
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "zh-CN,zh;q=0.9",
         "Referer": referer,
+        "Origin": "https://xueqiu.com",
         "X-Requested-With": "XMLHttpRequest",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
         "User-Agent": (
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
         ),
     }
     if cookie:
         headers["Cookie"] = cookie
     return headers
+
+
+def _is_waf_html(text: str) -> bool:
+    head = (text or "").lstrip()
+    return head.startswith("<") and ("_waf_" in head or "滑动验证" in head or "aliyun_waf" in head)
+
+
+def _warm_xq_session(client: EastMoneyClient) -> None:
+    """先访问 hq（不触发个股 WAF），建立会话后再调 API。"""
+    flag = "_xq_hq_warmed"
+    if client._cache.get(flag):
+        return
+    cookie, _ = resolve_xueqiu_cookie(try_browser=True)
+    if not cookie:
+        return
+    try:
+        client._throttle()
+        client._session.get(
+            XUEQIU_LOGIN_URL,
+            headers=_xq_headers(referer=XUEQIU_LOGIN_URL, cookie=cookie),
+            timeout=15,
+        )
+        client._cache.set(flag, True, 300)
+    except Exception:
+        pass
+
+
+def _xq_failure_reason(*, text: str, status_code: int, has_cookie: bool) -> str:
+    if _is_waf_html(text):
+        return "waf_captcha" if has_cookie else "blocked"
+    if status_code in {401, 403}:
+        return "auth_failed"
+    return "auth_failed"
 
 
 def _ts_ms_to_str(ts: Any) -> str | None:
@@ -151,9 +215,11 @@ def _xq_session_get_json(
     require_auth: bool = False,
     cache_key: str | None = None,
     cache_ttl: float = 120,
+    warm_session: bool = True,
 ) -> tuple[dict[str, Any] | None, str | None]:
     """雪球 xueqiu.com 域 JSON（livenews / 帖子等，需 Cookie）。"""
     cookie, _source = resolve_xueqiu_cookie(try_browser=True)
+    has_cookie = bool(cookie)
     if not cookie:
         if require_auth:
             raise XueqiuAuthRequired(reason="missing_token")
@@ -164,18 +230,30 @@ def _xq_session_get_json(
         if cached is not None:
             return cached, None
 
+    if warm_session:
+        _warm_xq_session(client)
+
     try:
         client._throttle()
         resp = client._session.get(
             url,
             params=params,
-            headers=_xq_headers(referer=referer),
+            headers=_xq_headers(referer=referer, cookie=cookie),
             timeout=15,
         )
-        if resp.status_code != 200 or resp.text.lstrip().startswith("<"):
-            reason = "blocked" if resp.text.lstrip().startswith("<") else "auth_failed"
+        if resp.status_code != 200 or _is_waf_html(resp.text):
+            reason = _xq_failure_reason(
+                text=resp.text,
+                status_code=resp.status_code,
+                has_cookie=has_cookie,
+            )
             if require_auth:
-                raise XueqiuAuthRequired(reason=reason)
+                detail = None
+                if reason == "waf_captcha":
+                    sym = params.get("symbol")
+                    if sym:
+                        detail = f"请在 Chrome 打开 https://xueqiu.com/S/{sym} 完成滑动验证。"
+                raise XueqiuAuthRequired(reason=reason, detail=detail)
             return None, reason
         data = resp.json()
     except XueqiuAuthRequired:
@@ -195,6 +273,27 @@ def _xq_session_get_json(
     if cache_key and cache_ttl > 0:
         client._cache.set(cache_key, data, cache_ttl)
     return data, None
+
+
+def _parse_stock_post_items(data: dict[str, Any], *, limit: int) -> list[dict[str, Any]]:
+    items = data.get("list") or []
+    rows: list[dict[str, Any]] = []
+    for item in items[:limit]:
+        if not isinstance(item, dict):
+            continue
+        text = (item.get("text") or item.get("description") or item.get("title") or "").strip()
+        if not text:
+            continue
+        rows.append(
+            {
+                "time": _ts_ms_to_str(item.get("created_at") or item.get("timeBefore")),
+                "title": text[:80] + ("…" if len(text) > 80 else ""),
+                "summary": text[:500],
+                "provider": "xueqiu_post",
+                "url": _livenews_item_url(item),
+            }
+        )
+    return rows
 
 
 def _livenews_items(data: dict[str, Any]) -> list[dict[str, Any]]:
@@ -438,12 +537,17 @@ def xueqiu_stock_sentiment(
         client,
         code,
         limit=max(0, limit - len(rows)),
-        require_auth=require_auth,
+        require_auth=False,
     )
     rows.extend(posts)
 
-    if include_auth_hint and auth_reason and len(rows) < limit:
-        rows.append(xueqiu_auth_hint_row(reason=auth_reason))
+    if include_auth_hint and auth_reason:
+        if auth_reason in {"waf_captcha", "blocked"} and resolve_xueqiu_cookie(try_browser=False)[0]:
+            rows.append(xueqiu_waf_hint_row(symbol=code_to_xq_symbol(code), code=code))
+        elif auth_reason == "missing_token" or (require_auth and not rows):
+            rows.append(xueqiu_auth_hint_row(reason=auth_reason))
+        elif len(rows) < limit:
+            rows.append(xueqiu_waf_hint_row(symbol=code_to_xq_symbol(code), code=code))
     return rows[:limit]
 
 
@@ -454,41 +558,63 @@ def xueqiu_stock_posts(
     limit: int = 5,
     require_auth: bool = False,
 ) -> tuple[list[dict[str, Any]], str | None]:
-    """个股帖子 timeline。require_auth=True 且无 Cookie 时抛出 XueqiuAuthRequired。"""
+    """个股帖子：优先 query API，失败再试 legacy timeline。"""
     symbol = code_to_xq_symbol(code)
-    params = {
-        "symbol": symbol,
-        "count": str(min(limit, 20)),
-        "source": "all",
-    }
-    data, reason = _xq_session_get_json(
-        client,
-        "https://xueqiu.com/statuses/stock_timeline.json",
-        params,
-        referer=f"https://xueqiu.com/S/{symbol}",
-        require_auth=require_auth,
-    )
-    if not data:
-        return [], reason
+    stock_url = f"https://xueqiu.com/S/{symbol}"
+    count = str(min(limit, 20))
 
-    items = data.get("list") or []
-    rows: list[dict[str, Any]] = []
-    for item in items[:limit]:
-        text = (item.get("text") or item.get("description") or "").strip()
-        if not text:
-            continue
-        rows.append(
+    attempts: list[tuple[str, dict[str, Any], str | None]] = [
+        (
+            XUEQIU_STOCK_STATUS_URL,
             {
-                "time": _ts_ms_to_str(item.get("created_at")),
-                "title": text[:80] + ("…" if len(text) > 80 else ""),
-                "summary": text[:500],
-                "provider": "xueqiu_post",
-                "url": _livenews_item_url(item),
-            }
+                "count": count,
+                "comment": "0",
+                "symbol": symbol,
+                "hl": "0",
+                "source": "all",
+                "sort": "time",
+                "page": "1",
+                "q_type": "",
+                "type": "11,12",
+            },
+            f"xq_posts_query:{symbol}:{limit}",
+        ),
+        (
+            XUEQIU_STOCK_TIMELINE_URL,
+            {"symbol": symbol, "count": count, "source": "all"},
+            None,
+        ),
+    ]
+
+    last_reason: str | None = None
+    for url, params, cache_key in attempts:
+        data, reason = _xq_session_get_json(
+            client,
+            url,
+            params,
+            referer=stock_url,
+            require_auth=False,
+            cache_key=cache_key,
+            cache_ttl=120 if cache_key else 0,
         )
-    if not rows and require_auth:
-        raise XueqiuAuthRequired(reason="auth_failed")
-    return rows, None if rows else reason
+        if data:
+            rows = _parse_stock_post_items(data, limit=limit)
+            if rows:
+                return rows, None
+        last_reason = reason
+
+    if require_auth:
+        cookie, _ = resolve_xueqiu_cookie(try_browser=False)
+        if not cookie:
+            raise XueqiuAuthRequired(reason="missing_token")
+        if last_reason in {"waf_captcha", "blocked"}:
+            raise XueqiuAuthRequired(
+                reason="waf_captcha",
+                detail=f"请在 Chrome 打开 {stock_url} 完成滑动验证。",
+            )
+        raise XueqiuAuthRequired(reason=last_reason or "auth_failed")
+
+    return [], last_reason
 
 
 def _symbol_to_code(symbol: str | None) -> str | None:

@@ -40,6 +40,13 @@ class XueqiuAuthRequired(Exception):
                 "MCP 子进程与终端权限不同，CLI 能读而 MCP 不能时属正常现象）。"
                 "可关闭浏览器后重试，或 export XUEQIU_TOKEN 兜底。"
             )
+        if self.reason == "waf_captcha":
+            return (
+                "已检测到雪球登录 Cookie，但个股讨论接口触发滑动验证（WAF）。\n"
+                + (self.detail or "")
+                + "\n请在 Chrome 打开上述个股页，手动完成滑动验证后重试；"
+                "仅登录 hq 页通常不足以通过个股页 WAF。"
+            )
         if self.detail:
             return base + f"\n{self.detail}"
         return base
@@ -63,6 +70,13 @@ def build_cookie_string(xq_a_token: str, u: str | None = None) -> str:
     if u:
         parts.append(f"u={u}")
     return ";".join(parts) + ";"
+
+
+def jar_to_cookie_string(jar: dict[str, str]) -> str:
+    """浏览器 Cookie 字典 → HTTP Cookie 头（含 WAF/设备指纹相关字段）。"""
+    if not jar:
+        return ""
+    return ";".join(f"{k}={v}" for k, v in jar.items()) + ";"
 
 
 def _jar_to_dict(jar: Any) -> dict[str, str]:
@@ -167,7 +181,7 @@ def resolve_xueqiu_cookie(*, try_browser: bool = True) -> tuple[str | None, str 
         jar, browser_or_err = load_browser_cookies()
         token = jar.get(XUEQIU_COOKIE_NAME)
         if token:
-            cookie = build_cookie_string(token, jar.get("u"))
+            cookie = jar_to_cookie_string(jar) or build_cookie_string(token, jar.get("u"))
             _save_cookie_cache(cookie, browser_or_err or "browser")
             sync_pysnowball_token(cookie)
             return cookie, f"browser:{browser_or_err}"
@@ -251,5 +265,9 @@ def xueqiu_cookie_diagnostics(*, try_browser: bool = True) -> dict[str, Any]:
             "MCP 子进程可能无法读取浏览器 Cookie（macOS 磁盘权限）。"
             "若 get_xueqiu_auth_status 在 CLI 正常、MCP 失败："
             "给 Cursor「完全磁盘访问权限」后重启，或使用 XUEQIU_TOKEN 环境变量。"
+        ),
+        "waf_note": (
+            "若 authenticated 为 true 但个股帖子仍失败：雪球 /S/ 个股页有滑动验证(WAF)，"
+            "需在 Chrome 打开对应个股页手动验证；仅登录 hq 不够。"
         ),
     }

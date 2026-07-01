@@ -54,13 +54,13 @@ python scripts/em.py get_xueqiu_auth_guide --reason missing_token
 2. 等待用户登录后 **在同一对话重试**
 3. 禁止在未授权时编造雪球帖子内容
 
-### 4. MCP 读不到 Cookie 时
+### 4. MCP 读不到 Cookie，或已登录仍无「深度帖」
 
 | 现象 | 处理 |
 |------|------|
 | CLI 成功、MCP 失败 | macOS：系统设置 → 隐私 → **完全磁盘访问** → 勾选 Cursor → 重启 |
+| `authenticated: true` 但无个股帖子 | 雪球 **个股页 WAF（滑动验证）**；在 Chrome 打开 `https://xueqiu.com/S/{SH\|SZ代码}` 手动滑块验证后重试 |
 | 无图形环境 / CI | `export XUEQIU_TOKEN='你的xq_a_token值'`（仅值，非整串 Cookie） |
-| WAF / 403 | `get_xueqiu_auth_guide --reason blocked`，更新 Cookie 后重试 |
 
 环境变量（兜底）：
 
