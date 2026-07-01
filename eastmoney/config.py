@@ -30,6 +30,8 @@ CHIP_URL = "https://push2his.eastmoney.com/api/qt/stock/cyq/get"
 BOARD_LIST_URL = "https://push2.eastmoney.com/api/qt/clist/get"
 BOARD_KLINE_URL = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
 DATACENTER_URL = "https://datacenter-web.eastmoney.com/api/data/v1/get"
+NEWS_LIST_URL = "https://np-listapi.eastmoney.com/comm/web/getNewsByColumns"
+FAST_NEWS_URL = "https://np-weblist.eastmoney.com/comm/web/getFastNewsList"
 
 KLT_MAP = {
     "daily": 101,

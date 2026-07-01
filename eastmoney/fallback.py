@@ -310,6 +310,70 @@ def run_fallback(name: str, **kwargs: Any) -> Any:
             )
         return rows
 
+    if name == "get_company_profile":
+        secid = kwargs["secid"]
+        code = kwargs["code"]
+        df = ak_mod.stock_info_a_code_name()
+        hit = df[df["code"] == code]
+        name = hit.iloc[0]["name"] if not hit.empty else None
+        return {
+            "secid": secid,
+            "code": code,
+            "name": name,
+            "_data_source": "akshare",
+        }
+
+    if name == "get_financial_statements":
+        code = kwargs["code"]
+        report_type = kwargs.get("report_type", "income")
+        limit = int(kwargs.get("limit", 8))
+        symbol_map = {
+            "income": "利润表",
+            "balance": "资产负债表",
+            "cashflow": "现金流量表",
+        }
+        df = ak_mod.stock_financial_report_sina(
+            stock=code,
+            symbol=symbol_map.get(report_type, "利润表"),
+        )
+        rows = _df_records(df, limit)
+        for row in rows:
+            row["_data_source"] = "akshare"
+        return rows
+
+    if name == "get_news_and_reports":
+        code = kwargs["code"]
+        content_type = kwargs.get("content_type", "news")
+        limit = int(kwargs.get("limit", 10))
+        if content_type == "news":
+            df = ak_mod.stock_news_em(symbol=code)
+            rows = []
+            for _, r in df.head(limit).iterrows():
+                rows.append(
+                    {
+                        "title": r.get("新闻标题"),
+                        "summary": r.get("新闻内容"),
+                        "date": r.get("发布时间"),
+                        "source": r.get("文章来源"),
+                        "url": r.get("新闻链接"),
+                        "_data_source": "akshare",
+                    }
+                )
+            return rows
+        if content_type == "announcement":
+            df = ak_mod.stock_zh_a_disclosure_report_cninfo(symbol=code)
+            rows = []
+            for _, r in df.head(limit).iterrows():
+                rows.append(
+                    {
+                        "title": r.get("公告标题"),
+                        "date": r.get("公告时间"),
+                        "_data_source": "akshare",
+                    }
+                )
+            return rows
+        raise NotImplementedError(f"akshare 降级暂未支持 content_type: {content_type}")
+
     raise NotImplementedError(f"akshare 降级暂未支持: {name}")
 
 

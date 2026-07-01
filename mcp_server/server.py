@@ -203,6 +203,34 @@ def compare_performance(
 
 
 @mcp.tool()
+def get_market_news(
+    news_type: Annotated[
+        str, Field(description="flash=7×24快讯, headline=要闻, breakfast=财经早餐")
+    ] = "flash",
+    keyword: Annotated[str, Field(description="标题/摘要关键词过滤，如 电池、半导体")] = "",
+    limit: Annotated[int, Field(ge=1, le=50)] = 20,
+) -> str:
+    """【舆情】市场快讯/要闻/财经早餐，抓热点与情绪面。"""
+    kwargs: dict[str, Any] = {"news_type": news_type, "limit": limit}
+    if keyword:
+        kwargs["keyword"] = keyword
+    return _dump(run_tool("get_market_news", **kwargs))
+
+
+@mcp.tool()
+def search_sectors(
+    query: Annotated[str, Field(description="板块关键词，如 电池、半导体")],
+    sector_type: Annotated[str, Field(description="industry/concept，留空则两类都搜")] = "",
+    limit: Annotated[int, Field(ge=1, le=20)] = 10,
+) -> str:
+    """【板块】模糊搜索行业/概念板块名，口语化输入如「电池板块」。"""
+    kwargs: dict[str, Any] = {"query": query, "limit": limit}
+    if sector_type:
+        kwargs["sector_type"] = sector_type
+    return _dump(run_tool("search_sectors", **kwargs))
+
+
+@mcp.tool()
 def get_sector_overview(
     sector_type: Annotated[str, Field(description="industry/concept")] = "industry",
     sort: str = "change_pct",

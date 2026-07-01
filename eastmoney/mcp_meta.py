@@ -5,7 +5,7 @@ MCP_INSTRUCTIONS = """
 
 ## 工作流
 1. 用户给出名称/代码时，先 resolve_symbol
-2. 全面分析时并行拉：行情、K线、资金流、筹码、财报、板块
+2. 全面分析时拉齐：行情、K线、资金流、筹码、财报、**新闻快讯**、板块
 3. 输出必须含免责声明：仅供参考，不构成投资建议
 
 ## secid
@@ -19,8 +19,9 @@ MCP_INSTRUCTIONS = """
 - 资金面: get_stock_fund_flow, get_fund_flow_rank, get_market_fund_flow
 - 筹码: get_chip_distribution
 - 历史: get_historical_series, compare_performance
-- 板块: get_sector_overview, get_sector_detail(members/kline/fund_flow)
-- 事件: get_shareholders, get_dragon_tiger, get_news_and_reports
+- 板块: search_sectors, get_sector_overview, get_sector_detail(members/kline/fund_flow)
+- 舆情: get_market_news(flash/headline/breakfast), get_news_and_reports
+- 事件: get_shareholders, get_dragon_tiger, get_major_events
 
 ## 限流
 工具内部已限流；批量请求时分批调用，避免连续高频。

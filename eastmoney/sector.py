@@ -143,6 +143,67 @@ def get_sector_kline(
     return rows
 
 
+def search_sectors(
+    client: EastMoneyClient,
+    query: str,
+    *,
+    sector_type: str | None = None,
+    limit: int = 10,
+) -> list[dict[str, Any]]:
+    """模糊搜索板块名（行业/概念），用于「电池板块」等口语化输入。"""
+    q = query.strip()
+    if not q:
+        return []
+
+    types = [sector_type] if sector_type else ["concept", "industry"]
+    matches: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    for st in types:
+        overview = get_sector_overview(client, sector_type=st, limit=500)
+        for item in overview:
+            name = item.get("name") or ""
+            code = str(item.get("code") or "")
+            key = f"{st}:{code}"
+            if key in seen:
+                continue
+            if q in name or name in q:
+                seen.add(key)
+                score = 100 if name == q else (80 if name.startswith(q) else 60)
+                matches.append({**item, "sector_type": st, "match_score": score})
+
+    matches.sort(key=lambda x: (-x.get("match_score", 0), -(x.get("change_pct") or 0)))
+    return matches[:limit]
+
+
+def _resolve_board(
+    client: EastMoneyClient,
+    board_name: str,
+    sector_type: str,
+) -> dict[str, Any]:
+    overview = get_sector_overview(client, sector_type=sector_type, limit=500)
+    exact = next((x for x in overview if x.get("name") == board_name), None)
+    if exact:
+        return exact
+
+    contains = [x for x in overview if board_name in (x.get("name") or "")]
+    if not contains:
+        # 跨类型再搜一次
+        alt = "concept" if sector_type == "industry" else "industry"
+        alt_overview = get_sector_overview(client, sector_type=alt, limit=500)
+        contains = [x for x in alt_overview if board_name in (x.get("name") or "")]
+        if contains:
+            return contains[0]
+
+        searched = search_sectors(client, board_name, limit=1)
+        if searched:
+            return searched[0]
+        raise ValueError(f"未找到板块: {board_name}")
+
+    contains.sort(key=lambda x: (len(x.get("name") or ""), -(x.get("change_pct") or 0)))
+    return contains[0]
+
+
 def get_sector_detail(
     client: EastMoneyClient,
     *,
@@ -153,12 +214,10 @@ def get_sector_detail(
     limit: int = 50,
 ) -> dict[str, Any]:
     if board_code is None and board_name:
-        overview = get_sector_overview(client, sector_type=sector_type, limit=200)
-        match = next((x for x in overview if x.get("name") == board_name), None)
-        if not match:
-            raise ValueError(f"未找到板块: {board_name}")
+        match = _resolve_board(client, board_name, sector_type)
         board_code = str(match["code"])
         board_name = match.get("name")
+        sector_type = match.get("sector_type", sector_type)
 
     if not board_code:
         raise ValueError("需要提供 board_code 或 board_name")
@@ -166,6 +225,7 @@ def get_sector_detail(
     result: dict[str, Any] = {
         "board_code": board_code,
         "board_name": board_name,
+        "sector_type": sector_type,
         "detail_type": detail_type,
     }
     if detail_type == "members":

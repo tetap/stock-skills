@@ -31,6 +31,8 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--board-name")
     parser.add_argument("--sort", default="change_pct")
     parser.add_argument("--indicators", help="逗号分隔，如 ma")
+    parser.add_argument("--news-type", default="flash", choices=["flash", "headline", "breakfast"])
+    parser.add_argument("--keyword", help="资讯关键词过滤，如 电池、新能源")
 
 
 def main() -> int:
@@ -61,6 +63,8 @@ def main() -> int:
             "board_name": args.board_name,
             "sort": args.sort,
             "indicators": args.indicators,
+            "news_type": args.news_type,
+            "keyword": args.keyword,
         }.items()
         if v is not None
     }

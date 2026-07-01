@@ -21,7 +21,7 @@ python scripts/em.py get_realtime_quote --secid 1.600519
 
 ## MCP（推荐）
 
-项目已包含 `.cursor/mcp.json`，在 Cursor 设置中启用 MCP 后，模型可直接调用 `eastmoney-stock` 下的 19 个工具。
+项目已包含 `.cursor/mcp.json`，在 Cursor 设置中启用 MCP 后，模型可直接调用 `eastmoney-stock` 下的 29 个工具。
 
 重启 Cursor 或刷新 MCP 后生效。MCP 命令：
 
@@ -90,7 +90,7 @@ bash scripts/test.sh
 - 深交所/北交所：`0.{6位代码}`（如 `0.000001`）
 - 不确定时先调 `resolve_symbol`
 
-## 20 个工具
+## 29 个工具
 
 | 工具 | 主要参数 |
 |------|----------|
@@ -103,16 +103,24 @@ bash scripts/test.sh
 | get_financial_statements | --code, --report-type, --limit |
 | get_valuation_metrics | --secid |
 | get_shareholders | --code, --limit |
+| get_shareholder_count | --code, --limit |
+| get_major_events | --code, --limit |
 | get_dragon_tiger | --code, --limit |
 | get_news_and_reports | --code, --content-type, --limit |
+| get_market_news | --news-type flash/headline/breakfast, --keyword, --limit |
 | get_stock_fund_flow | --secid, --limit |
 | get_fund_flow_rank | --limit |
 | get_market_fund_flow | --limit |
 | get_chip_distribution | --secid, --limit |
 | get_historical_series | --secid, --limit, --indicators ma |
 | compare_performance | --secid, --benchmark-code |
+| search_sectors | --query, --sector-type, --limit |
 | get_sector_overview | --sector-type, --sort, --limit |
 | get_sector_detail | --board-name 或 --board-code, --detail-type members/kline/fund_flow |
+| get_indicator_interpretation | --secid, --code |
+| get_limit_up_gene | --secid, --code |
+| get_short_term_monitor | --code |
+| get_limit_up_history | --code, --limit |
 
 ## 限流与缓存
 

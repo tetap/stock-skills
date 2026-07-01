@@ -20,8 +20,9 @@ from eastmoney.financial import get_company_profile, get_financial_statements, g
 from eastmoney.fund_flow import get_fund_flow_rank, get_market_fund_flow, get_stock_fund_flow
 from eastmoney.historical import compare_performance, get_historical_series
 from eastmoney.kline import get_kline
+from eastmoney.news import get_market_news
 from eastmoney.quote import get_market_snapshot, get_realtime_quote
-from eastmoney.sector import get_sector_detail, get_sector_overview
+from eastmoney.sector import get_sector_detail, get_sector_overview, search_sectors
 from eastmoney.short_term import get_limit_up_history, get_short_term_monitor
 from eastmoney.signals import get_indicator_interpretation, get_limit_up_gene
 from eastmoney.symbols import resolve_symbol, search_stocks
@@ -39,6 +40,16 @@ FALLBACK_TOOLS = {
     "get_chip_distribution",
     "get_sector_overview",
     "get_sector_detail",
+    "get_company_profile",
+    "get_financial_statements",
+    "get_news_and_reports",
+}
+
+# 主接口「成功但空结果」时也尝试 AkShare
+EMPTY_FALLBACK_TOOLS = {
+    "get_company_profile",
+    "get_financial_statements",
+    "get_news_and_reports",
 }
 
 
@@ -125,6 +136,20 @@ def _run_primary(name: str, **kwargs: Any) -> Any:
             benchmark_code=kwargs.get("benchmark_code", "000300"),
             limit=int(kwargs.get("limit", 250)),
         )
+    if name == "get_market_news":
+        return get_market_news(
+            client,
+            news_type=kwargs.get("news_type", "flash"),
+            keyword=kwargs.get("keyword"),
+            limit=int(kwargs.get("limit", 20)),
+        )
+    if name == "search_sectors":
+        return search_sectors(
+            client,
+            kwargs["query"],
+            sector_type=kwargs.get("sector_type"),
+            limit=int(kwargs.get("limit", 10)),
+        )
     if name == "get_sector_overview":
         return get_sector_overview(
             client,
@@ -163,19 +188,46 @@ def _run_primary(name: str, **kwargs: Any) -> Any:
     raise ValueError(f"未知工具: {name}")
 
 
+def _is_empty_result(name: str, result: Any) -> bool:
+    if name == "get_company_profile":
+        return isinstance(result, dict) and not result.get("name") and not result.get("industry")
+    if isinstance(result, list):
+        return len(result) == 0
+    return False
+
+
+def _try_fallback(name: str, kwargs: dict[str, Any], primary_error: Exception | None = None) -> Any:
+    if not FALLBACK_ENABLED or name not in FALLBACK_TOOLS or not akshare_available():
+        if primary_error:
+            raise primary_error
+        return None
+    try:
+        return run_fallback(name, **kwargs)
+    except Exception:
+        if primary_error:
+            raise primary_error
+        return None
+
+
 def run_tool(name: str, **kwargs: Any) -> Any:
     if name not in TOOL_NAMES:
         raise ValueError(f"未知工具: {name}")
 
     try:
-        return _run_primary(name, **kwargs)
+        result = _run_primary(name, **kwargs)
+        if (
+            name in EMPTY_FALLBACK_TOOLS
+            and _is_empty_result(name, result)
+        ):
+            fb = _try_fallback(name, kwargs)
+            if fb is not None and not _is_empty_result(name, fb):
+                return fb
+        return result
     except Exception as primary_error:
-        if not FALLBACK_ENABLED or name not in FALLBACK_TOOLS or not akshare_available():
-            raise primary_error
-        try:
-            return run_fallback(name, **kwargs)
-        except Exception:
-            raise primary_error
+        fb = _try_fallback(name, kwargs, primary_error)
+        if fb is not None:
+            return fb
+        raise primary_error
 
 
 TOOL_NAMES = [
@@ -198,6 +250,8 @@ TOOL_NAMES = [
     "get_chip_distribution",
     "get_historical_series",
     "compare_performance",
+    "get_market_news",
+    "search_sectors",
     "get_sector_overview",
     "get_sector_detail",
     "get_indicator_interpretation",

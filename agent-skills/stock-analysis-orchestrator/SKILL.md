@@ -9,17 +9,23 @@ description: >-
 
 ## 触发
 
-`/stock` 分析类请求、全面分析、值不值得关注、近期能否介入。
+`/stock` 分析类请求、板块走势选股、市场热点情绪、值不值得关注、近期能否介入。
 
 ## 标准流程
 
+### 个股
+
 1. `resolve_symbol` → secid、code、name
-2. **全量拉数**（见 **stock-main/analysis-report.md** 工具表）：
-   - 基本面：`get_company_profile`，`get_financial_statements` ×3（income/balance/cashflow），`get_valuation_metrics`，`get_shareholders`，`get_shareholder_count`
-   - 技术：`get_kline`，`get_historical_series --indicators ma`，`compare_performance`，`get_indicator_interpretation`，`get_short_term_monitor`
-   - 资金筹码：`get_stock_fund_flow`，`get_market_fund_flow`，`get_chip_distribution`
-   - 事件板块：`get_major_events`，`get_news_and_reports`（news+announcement），`get_sector_detail`，`get_dragon_tiger`
-3. 按 **stock-main/analysis-report.md** 输出（6 节，含近期操作）
+2. **全量拉数**（见 **stock-main/analysis-report.md**），含 `get_market_news`
+3. 6 节报告
+
+### 板块 + 选股
+
+见 **stock-main/sector-report.md**：`search_sectors` → 板块 kline/资金/成分 → 快讯 keyword → 3~5 只轻扫
+
+### 市场热点
+
+见 **stock-main/market-brief.md**：快讯 + 板块排行 + 资金
 
 ## 路由
 

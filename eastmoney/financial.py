@@ -12,7 +12,10 @@ from eastmoney.quote import get_realtime_quote
 def get_company_profile(client: EastMoneyClient, secid: str, code: str) -> dict[str, Any]:
     params = {
         "reportName": "RPT_F10_BASIC_ORGINFO",
-        "columns": "SECUCODE,SECURITY_CODE,SECURITY_NAME_ABBR,ORG_NAME,EM2016,TRADE_MARKET,FOUND_DATE,LISTING_DATE,INDUSTRY,MAIN_BUSINESS",
+        "columns": (
+            "SECUCODE,SECURITY_CODE,SECURITY_NAME_ABBR,ORG_NAME,EM2016,"
+            "TRADE_MARKET,FOUND_DATE,LISTING_DATE,INDUSTRYCSRC1,MAIN_BUSINESS"
+        ),
         "filter": f'(SECURITY_CODE="{code}")',
         "pageNumber": "1",
         "pageSize": "1",
@@ -34,7 +37,7 @@ def get_company_profile(client: EastMoneyClient, secid: str, code: str) -> dict[
         "code": row.get("SECURITY_CODE"),
         "name": row.get("SECURITY_NAME_ABBR"),
         "org_name": row.get("ORG_NAME"),
-        "industry": row.get("INDUSTRY"),
+        "industry": row.get("INDUSTRYCSRC1") or row.get("EM2016"),
         "main_business": row.get("MAIN_BUSINESS"),
         "listing_date": row.get("LISTING_DATE"),
         "market": row.get("TRADE_MARKET"),
@@ -62,7 +65,7 @@ def get_financial_statements(
         "filter": f'(SECURITY_CODE="{code}")',
         "pageNumber": "1",
         "pageSize": str(limit),
-        "sortColumns": "REPORT_DATE",
+        "sortColumns": "REPORTDATE",
         "sortTypes": "-1",
         "source": "WEB",
         "client": "WEB",

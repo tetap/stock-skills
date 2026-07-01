@@ -54,10 +54,15 @@
 | 工具 | 参数 |
 |------|------|
 | `get_major_events` | code, limit 15 |
-| `get_news_and_reports` | code, news, limit 8 |
+| `get_news_and_reports` | code, news, limit 10 |
 | `get_news_and_reports` | code, announcement, limit 5 |
+| `get_news_and_reports` | code, report, limit 3 |
+| `get_market_news` | flash, limit 20（看大盘/行业热点） |
+| `get_market_news` | flash, keyword=行业或公司关键词, limit 10 |
 | `get_sector_detail` | 从 profile 行业名, members 或 fund_flow |
 | `get_dragon_tiger` | code, limit 5（有则写，无则跳过） |
+
+**§5 事件与板块** 必须写：个股新闻 2 条 + **与标的相关的市场热点/情绪** 1~2 条（来自 `get_market_news`）。
 
 CLI 示例：
 
@@ -114,8 +119,9 @@ python scripts/em.py get_financial_statements --code 600519 --report-type cashfl
 ## 5. 事件与板块
 
 - 大事提醒 2~3 条
+- **情绪/热点**：与标的或所属行业相关的快讯 1~2 条
 - 板块内相对位置（如有）
-- 近期新闻/公告 1 条要点
+- 近期新闻/公告 1~2 条要点
 
 ## 6. 主要风险
 

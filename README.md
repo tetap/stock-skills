@@ -2,7 +2,7 @@
 
 东方财富 A 股数据 + Agent Skills + **`/stock` 主命令**（查价 / **全量分析**），支持 Cursor、Claude Code、Codex CLI。
 
-**核心亮点**：分析时**拉齐基本面三表、估值、技术、资金、筹码、事件**，输出简洁可操作建议（看几日线、介入区间），**不使用**巴菲特/格雷厄姆等顾问角色模块。
+**核心亮点**：`/stock` 一个入口 — **个股全量分析**、**板块走势+选股**、**市场热点情绪**；拉齐基本面/技术/资金/筹码/**7×24 快讯**，输出简洁可操作建议，**不使用**投资顾问角色。
 
 > **免责声明**：数据仅供参考，不构成任何投资建议。
 
@@ -48,11 +48,12 @@ bash scripts/install.sh --target all --scope project
 
 安装完成后**重启** Cursor / Claude Code / Codex。
 
-**试试分析（安装后）：**
+**试试（安装后）：**
 
 ```
 /stock 分析 贵州茅台
-/stock 帮我看看黔源电力能不能买，看几日线
+/stock 电池板块最近走势，给我几个看好的股票
+/stock 今天有什么热点，情绪怎么样
 ```
 
 ---
@@ -249,9 +250,17 @@ python scripts/em.py get_realtime_quote --secid 1.600519
 
 ---
 
-## `/stock` 全量分析
+## `/stock` 用法一览
 
-分析时 **尽量拉全 MCP/CLI 工具**，再写 **6 节简洁报告**（不是顾问角色、不是数据 dump）。
+| 场景 | 示例 | 模板 |
+|------|------|------|
+| 个股全量分析 | `/stock 分析 600519` | analysis-report.md |
+| 板块 + 选股 | `/stock 电池板块走势，推荐几只` | sector-report.md |
+| 热点 / 情绪 | `/stock 今天有什么热点` | market-brief.md |
+
+### 个股分析
+
+分析时 **尽量拉全 MCP/CLI 工具（≥18 次）**，再写 **6 节简洁报告**。
 
 模板见 [`agent-skills/stock-main/analysis-report.md`](agent-skills/stock-main/analysis-report.md)。
 
@@ -262,7 +271,7 @@ python scripts/em.py get_realtime_quote --secid 1.600519
 | **基本面** | 公司简介、**利润表/资产负债表/现金流**、估值、十大股东、股东户数 |
 | **行情技术** | 现价、K 线、MA5/20/60、相对沪深300、指标解读、短线盯盘 |
 | **资金筹码** | 个股/大盘资金流、筹码分布 |
-| **事件板块** | 大事提醒、新闻/公告、板块成分、龙虎榜（如有） |
+| **事件舆情** | 大事提醒、个股新闻/公告、**7×24 快讯**、板块成分、龙虎榜 |
 
 ### 报告结构（6 节）
 
@@ -270,17 +279,19 @@ python scripts/em.py get_realtime_quote --secid 1.600519
 2. 基本面与估值  
 3. 技术面  
 4. 资金与筹码  
-5. 事件与板块  
+5. 事件与板块（含 **情绪热点**）  
 6. 主要风险  
 
-### 用法
+### 用法示例
 
 ```
 /stock 分析 600519
 /stock 帮我看看能不能买，看几日线
+/stock 半导体板块最近怎么样，挑几只
+/stock 今天市场情绪和热点
 ```
 
-`/stock-analyze` 与 `/stock 分析` 相同。`/stock-role` **已废弃**（原投资顾问角色不适合 A 股主流程）。
+`/stock-analyze` 与 `/stock 分析` 相同。
 
 ---
 
@@ -406,9 +417,9 @@ python scripts/em.py compare_performance --secid 1.600519 --benchmark-code 00030
 
 ---
 
-## MCP 工具（27 个，Cursor）
+## MCP 工具（29 个，Cursor）
 
-含：基本面三表、估值、股东户数、大事提醒、指标解读、短线盯盘、筹码、板块等。完整列表：`python scripts/em.py list`
+含：7×24 快讯、板块模糊搜索、基本面三表、短线盯盘、筹码等。完整列表：`python scripts/em.py list`
 
 ---
 
