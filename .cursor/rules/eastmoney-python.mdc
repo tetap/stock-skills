@@ -1,0 +1,30 @@
+---
+description: eastmoney Python/MCP 实现约定
+globs: eastmoney/**/*.py,mcp_server/**/*.py,scripts/em.py,scripts/train*.py,scripts/backtest*.py,tests/**/*.py
+alwaysApply: false
+---
+
+# Python 数据层
+
+## 结构
+
+- 业务逻辑在 `eastmoney/`，MCP 薄封装在 `mcp_server/server.py`
+- CLI 走 `eastmoney.tools.run_tool`；新增工具必须同步 `TOOL_NAMES` 与 MCP（`test_mcp_parity`）
+
+## 惯例
+
+- K 线批量/训练用 `get_kline_resilient`（AkShare 降级）
+- 雪球鉴权失败 → `XueqiuAuthRequired` 或 `format_tool_result` 的 `status: auth_required`
+- 限流：`EastMoneyClient(min_interval=0.6)`；训练脚本可用更慢间隔
+
+## 测试
+
+```bash
+bash scripts/check.sh
+```
+
+改工具数、review、quant OOS 时跑对应用例；接口改动可选 `LIVE=1 bash scripts/smoke_live.sh`。
+
+## 依赖
+
+优先 `requirements.lock`；改主依赖后 `bash scripts/lock_deps.sh`。

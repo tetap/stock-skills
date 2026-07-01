@@ -378,7 +378,7 @@ python scripts/em.py compare_performance --secid 1.600519 --benchmark-code 00030
 
 ## 项目结构
 
-Agent 路由与架构详见 [`AGENTS.md`](AGENTS.md)。
+Agent 路由与架构详见 [`AGENTS.md`](AGENTS.md)。参与贡献见 [`CONTRIBUTING.md`](CONTRIBUTING.md)。
 
 ```
 .

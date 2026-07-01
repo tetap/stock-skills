@@ -121,3 +121,5 @@ bash scripts/lock_deps.sh                              # 更新 requirements.loc
 - 必涨必买 / 全仓 / 稳赚
 
 详细模板见 `agent-skills/stock-main/review-protocol.md`。
+
+贡献与 PR：见 [CONTRIBUTING.md](CONTRIBUTING.md)。

@@ -1,0 +1,15 @@
+---
+description: agent-skills 与命令文档编辑约定
+globs: agent-skills/**/*.md,agent-commands/**/*.md,agent-slash-skills/**/*.md,AGENTS.md
+alwaysApply: false
+---
+
+# Skills 文档
+
+- **源码**在 `agent-skills/`、`agent-commands/`、`agent-slash-skills/`（非 `.cursor/skills` 链接目录）
+- 路由/审核变更：同步 `AGENTS.md`、`stock-main/review-protocol.md`、相关 slash/command
+- 个股报告 **7 节**（§7 审核纪要）；单维命令不写 review-protocol
+- 工具次数：个股 ≥20，板块 ≥12；与 `get_review_protocol` 一致
+- 雪球：浏览器 Cookie 自动读取，勿写「必须手动配 XUEQIU_TOKEN」为主流程
+
+安装到本机：`bash scripts/install.sh --target cursor --scope user`

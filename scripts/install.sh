@@ -44,6 +44,8 @@ usage() {
 
 Windows: powershell -ExecutionPolicy Bypass -File scripts/install.ps1
 
+文档: AGENTS.md（路由） · CONTRIBUTING.md（PR）
+
 示例:
   bash scripts/install.sh --target all
   bash scripts/install.sh --target claude --what slash
