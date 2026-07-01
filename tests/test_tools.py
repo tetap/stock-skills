@@ -55,5 +55,16 @@ class TestResolveSymbolLocal(unittest.TestCase):
         self.assertEqual(result["secid"], "1.600519")
 
 
+class TestXueqiuInterrupt(unittest.TestCase):
+    @patch("eastmoney.tools._run_primary")
+    def test_auth_required_has_status(self, mock_primary: MagicMock) -> None:
+        from eastmoney.xueqiu_auth import XueqiuAuthRequired
+
+        mock_primary.side_effect = XueqiuAuthRequired(reason="missing_token")
+        result = run_tool("get_news_and_reports", code="600519", source="xueqiu")
+        self.assertEqual(result["status"], "auth_required")
+        self.assertTrue(result["interrupt"])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -364,7 +364,7 @@ python scripts/em.py compare_performance --secid 1.600519 --benchmark-code 00030
 
 ```
 .
-├── agent-skills/          # 分析 workflow（12 个 SKILL，含 stock-main 主编排）
+├── agent-skills/          # 分析 workflow（13 个 SKILL，含 stock-main 主编排）
 ├── agent-commands/        # Cursor 快捷指令（*.md）
 ├── agent-slash-skills/    # Claude/Codex 快捷指令（SKILL.md 目录）
 ├── eastmoney/             # Python 数据层（36 个 CLI/MCP 工具）
@@ -398,6 +398,8 @@ python scripts/em.py compare_performance --secid 1.600519 --benchmark-code 00030
 | `stock-historical-analysis` | 历史统计 |
 | `stock-sector-analysis` | 板块 |
 | `stock-event-research` | 新闻 / 公告 / 股东 |
+| `stock-report-review` | 报告多重审核（配合 review-protocol） |
+| `stock-quant-research` | Alpha158/360 量化研发纪律 |
 | `eastmoney-api` | 工具规范、secid、限流 |
 
 ---
@@ -448,6 +450,8 @@ export EASTMONEY_DISABLE_FALLBACK=1   # 禁用降级
 ```bash
 bash scripts/test.sh
 ```
+
+GitHub Actions 在 push/PR 到 `master` 时自动运行相同测试（见 `.github/workflows/test.yml`）。
 
 ---
 

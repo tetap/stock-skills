@@ -19,7 +19,7 @@ usage() {
 用法: scripts/install.sh [选项]
 
 组件:
-  agent-skills/       分析 workflow（12 个，含 stock-main 主编排）
+  agent-skills/       分析 workflow（13 个，含 stock-main 主编排）
   agent-commands/     Cursor 快捷指令（纯 Markdown）
   agent-slash-skills/ Claude/Codex 快捷指令（SKILL.md + /stock 或 $stock）
 
@@ -148,6 +148,21 @@ remove_deprecated_skills() {
     if [[ -e "$dest/$name" ]]; then
       rm -rf "$dest/$name"
       echo "removed deprecated skill: $dest/$name"
+    fi
+  done
+}
+
+remove_deprecated_commands() {
+  local dest="$1"
+  local name
+  local deprecated=(
+    stock-role.md
+    stock-role
+  )
+  for name in "${deprecated[@]}"; do
+    if [[ -e "$dest/$name" ]]; then
+      rm -rf "$dest/$name"
+      echo "removed deprecated command: $dest/$name"
     fi
   done
 }
@@ -330,6 +345,7 @@ for agent in "${expanded[@]}"; do
     else
       dest="$(commands_dest_for)"
       echo "[cursor commands] -> $dest"
+      remove_deprecated_commands "$dest"
       install_commands "$dest"
     fi
   fi
