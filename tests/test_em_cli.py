@@ -18,7 +18,8 @@ class TestEmCli(unittest.TestCase):
             ],
             capture_output=True,
             text=True,
-            check=False,
+            encoding="utf-8",
+            errors="replace",
         )
         self.assertEqual(proc.returncode, 0, msg=proc.stderr)
         self.assertIn('"flow": "C"', proc.stdout)

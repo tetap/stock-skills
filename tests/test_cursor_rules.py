@@ -65,7 +65,8 @@ class TestProjectGovernance(unittest.TestCase):
             [sys.executable, str(RELEASE_NOTES_SCRIPT), "v0.1.0"],
             capture_output=True,
             text=True,
-            check=False,
+            encoding="utf-8",
+            errors="replace",
             cwd=ROOT,
         )
         self.assertEqual(proc.returncode, 0, proc.stderr)
