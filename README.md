@@ -1,497 +1,309 @@
-# Eastmoney Stock Skills
+<div align="center">
 
-![test](https://github.com/tetap/stock-skills/actions/workflows/test.yml/badge.svg)
+# stock-skills
 
-东方财富 A 股数据 + Agent Skills + **`/stock` 主命令**（查价 / **全量分析**），支持 Cursor、Claude Code、Codex CLI。
+**东方财富 A 股数据 × Agent Skills × `/stock` 一键分析**
 
-**核心亮点**：`/stock` 一个入口 — **个股全量分析**、**板块走势+选股**、**市场热点情绪**；拉齐基本面/技术/资金/筹码/**7×24 快讯**，输出简洁可操作建议，**不使用**投资顾问角色。
+[![test](https://github.com/tetap/stock-skills/actions/workflows/test.yml/badge.svg)](https://github.com/tetap/stock-skills/actions/workflows/test.yml)
+[![release](https://img.shields.io/github/v/release/tetap/stock-skills?label=release)](https://github.com/tetap/stock-skills/releases)
+[![license](https://img.shields.io/github/license/tetap/stock-skills)](LICENSE)
+[![python](https://img.shields.io/badge/python-3.12+-blue.svg)](requirements.txt)
 
-> **免责声明**：数据仅供参考，不构成任何投资建议。
+[快速开始](#-快速开始) · [安装](#-安装) · [用法](#-用法) · [架构](#-架构) · [文档](#-文档)
 
-[变更记录](CHANGELOG.md) · [路线图](ROADMAP.md) · [贡献](CONTRIBUTING.md) · [安全](SECURITY.md) · [Agent 指南](AGENTS.md) · [雪球授权](docs/xueqiu-auth.md)
+<img src="docs/assets/banner.png" alt="stock-skills：东方财富 A 股数据与 Agent 分析" width="100%" />
+
+在 **Cursor / Claude Code / Codex** 里用自然语言查行情、做全量个股分析、扫板块选股、看市场热点。  
+36 个 MCP 工具拉齐 **基本面 · 技术 · 资金 · 筹码 · 舆情 · 量化**，输出带 **§7 审核纪要** 的结构化报告。
+
+> **免责声明**：数据来源于公开接口，仅供参考，**不构成任何投资建议**。
+
+</div>
 
 ---
 
-## 5 分钟上手
+## ✨ 核心亮点
 
-### 0. 克隆并安装（Skills + Python 依赖 + MCP 一键完成）
+| | 能力 | 说明 |
+|:---:|:---|:---|
+| 🎯 | **一个入口 `/stock`** | 查价、个股全量分析、板块+选股、市场热点/情绪，Agent 自动路由 |
+| 📊 | **真数据，不编造** | 36 个 MCP/CLI 工具对接东方财富；失败自动 AkShare 降级 |
+| 🔍 | **全量个股分析** | 三表财报 + MA/相对强弱 + 主力/筹码 + 7×24 快讯 + Alpha158 量化辅助 |
+| 🛡️ | **审核门禁** | `get_review_protocol` B/C/D 流程，终稿含 **§7 审核纪要**，禁止空泛「观望」 |
+| 🔌 | **三端即用** | Cursor（MCP + 命令）、Claude（`/stock`）、Codex（`$stock`）一键安装 |
+| ⚡ | **CLI 可独立用** | 不依赖 AI：`python scripts/em.py get_realtime_quote …` |
+
+---
+
+## 🚀 快速开始
+
+> 约 **3 分钟**：克隆 → 安装 → 重启 Cursor → 开聊。
 
 ```bash
-git clone git@github.com:tetap/stock-skills.git skills
-cd skills
-
-# 自动：.venv + pip install -r requirements.txt + 同步 .cursor/mcp.json + 安装 Skills
+git clone https://github.com/tetap/stock-skills.git
+cd stock-skills
 bash scripts/install.sh --target cursor --scope user
 ```
 
-如需量化 ML 依赖（LightGBM / PyTorch）：
-
-```bash
-bash scripts/install.sh --target cursor --scope user --with-ml
-```
-
-仅链接 Skills、跳过 pip（已装过依赖时）：
-
-```bash
-bash scripts/install.sh --target cursor --scope user --skip-deps
-```
-
-手动验证 CLI：
-
-```bash
-.venv/bin/python scripts/em.py resolve_symbol --query "600519"
-```
-
-### 1. 一键安装到 Cursor + Claude Code + Codex（推荐）
-
-```bash
-# 全局：本机所有项目可用
-bash scripts/install.sh --target all --scope user
-
-# 项目级：仅当前仓库（可提交 Git，团队共享）
-bash scripts/install.sh --target all --scope project
-```
-
-安装内容：
-
-| 组件 | 目录 | 作用 |
-|------|------|------|
-| 分析 Skills | `agent-skills/` | 主编排、全量分析 workflow |
-| Cursor 快捷指令 | `agent-commands/` | `/stock` 主命令及专项快捷指令 |
-| Claude/Codex 快捷指令 | `agent-slash-skills/` | `/stock` 或 `$stock` |
-
-安装完成后**重启** Cursor / Claude Code / Codex。
-
-**试试（安装后）：**
+1. **重启 Cursor**（加载 Skills + MCP）
+2. 用 Cursor **打开本仓库目录**（MCP 写在项目内 `.cursor/mcp.json`）
+3. 在对话里输入：
 
 ```
-/stock 分析 贵州茅台
-/stock 电池板块最近走势，给我几个看好的股票
+/stock 600519
+/stock 分析 宁德时代，看几日线能不能介入
+/stock 电池板块最近走势，推荐几只
 /stock 今天有什么热点，情绪怎么样
 ```
 
----
-
-## Cursor 安装与使用
-
-### 安装
+验证安装：
 
 ```bash
-cd skills
-bash scripts/install.sh --target cursor --scope user    # 全局
-bash scripts/install.sh --target cursor --scope project # 仅本仓库
-```
-
-安装路径：
-
-| 类型 | 全局 | 项目 |
-|------|------|------|
-| 分析 Skills | `~/.cursor/skills/` | `.cursor/skills/` |
-| 快捷指令 | `~/.cursor/commands/` | `.cursor/commands/` |
-| MCP 配置 | — | 运行 `install.sh` 生成本地 **项目内** `.cursor/mcp.json`（见 `.cursor/mcp.json.example`） |
-
-> **MCP 路径说明**：`install.sh` 始终把 `eastmoney-stock` 写入**当前仓库**的 `.cursor/mcp.json`（含本机绝对路径），与 `--scope user/project` 无关。Skills 可装到 `~/.cursor/skills/`，但 MCP 需在 Cursor 打开**本仓库**时加载。若 clone 到多个目录，每个目录各跑一次 `install.sh`；勿把含个人路径的 `mcp.json` 提交到 Git。
-
-### 启用 MCP（推荐，模型可直接调全部数据工具）
-
-1. 先运行 `bash scripts/install.sh --target cursor`（生成 `.cursor/mcp.json` 并安装依赖）
-2. 打开 Cursor → **Settings → MCP**
-3. 确认 `eastmoney-stock` 已加载（**36 个工具**）
-4. 若未出现，重启 Cursor 或 Reload MCP
-
-验证 MCP 进程：
-
-```bash
-source .venv/bin/activate
-python -m mcp_server
-```
-
-### Cursor 使用示例
-
-**主命令 `/stock`**：
-
-```
-/stock 贵州茅台
-/stock 分析 宁德时代，近期能不能介入
-/stock 帮我看看比亚迪，看几日线
-```
-
-专项快捷命令（仅当用户明确只要某一维度时使用）：
-
-```
-/stock-fund 600519
-/stock-chip 比亚迪
-/stock-kline 招商银行
-```
-
-不用快捷指令时，也可自然语言 + Skill：
-
-```
-用 stock-capital-flow 分析贵州茅台近20日主力流向
-用 stock-analysis-orchestrator 全面分析五粮液
+.venv/bin/python scripts/em.py resolve_symbol --query "贵州茅台"
+.venv/bin/python scripts/em.py list   # 36 个工具
 ```
 
 ---
 
-## Claude Code 安装与使用
+## 📦 安装
 
-### 安装
-
-```bash
-cd skills
-bash scripts/install.sh --target claude --scope user
-bash scripts/install.sh --target claude --scope project
-```
-
-安装路径：
-
-| 类型 | 全局 | 项目 |
-|------|------|------|
-| 分析 Skills | `~/.claude/skills/` | `.claude/skills/` |
-| 快捷指令（/stock） | 同上，目录名 `stock/` 等 | 同上 |
-
-Claude Code 将 **Skills 目录名** 映射为 slash 命令，例如 `agent-slash-skills/stock/` → **`/stock`**。
-
-仅安装快捷指令（不装分析 Skills）：
+### 推荐：三端一次装齐
 
 ```bash
-bash scripts/install.sh --target claude --what slash
+bash scripts/install.sh --target all --scope user    # 全局，所有项目可用
+bash scripts/install.sh --target all --scope project # 项目级，团队可共享
 ```
 
-仅安装分析 Skills：
+| 安装内容 | 路径 | 作用 |
+|---------|------|------|
+| 分析 Skills | `agent-skills/` → `~/.cursor/skills/` 等 | 编排 workflow、报告模板 |
+| Cursor 命令 | `agent-commands/` → `~/.cursor/commands/` | `/stock`、`/stock-fund` … |
+| Claude/Codex | `agent-slash-skills/` | `/stock` 或 `$stock` |
+| Python 环境 | `.venv/` + `requirements.lock` | 数据层 + MCP Server |
+| MCP 配置 | `.cursor/mcp.json`（本地生成） | Cursor 直连 36 工具 |
+
+**可选参数**
 
 ```bash
-bash scripts/install.sh --target claude --what skills
+bash scripts/install.sh --with-ml      # LightGBM / PyTorch（量化训练）
+bash scripts/install.sh --skip-deps  # 仅链接 Skills，跳过 pip
+bash scripts/install.sh --unlink       # 卸载
+bash scripts/install.sh --help         # 完整参数
 ```
 
-### Claude Code 使用示例
+**Windows**
 
-在 Claude Code 终端或对话中：
-
-```
-/stock 贵州茅台
-/stock 分析 宁德时代，能不能买
-/stock-analyze 比亚迪
-/stock-fund 招商银行
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -Target cursor -Scope user
+powershell -ExecutionPolicy Bypass -File scripts/check.ps1   # 发布前检查
 ```
 
-自然语言（会自动匹配分析 Skills）：
-
-```
-帮我用东方财富数据看一下比亚迪的筹码集中度
-对比一下贵州茅台和沪深300近一年的表现
-```
-
-### Claude Code 数据从哪来？
-
-Claude Code 本身不内置行情接口。需要在本仓库执行 CLI，或在本机配置 MCP（若 Claude 侧已接 MCP）：
+### Cursor MCP 启用
 
 ```bash
-source .venv/bin/activate
-python scripts/em.py get_realtime_quote --secid 1.600519
-python scripts/em.py get_chip_distribution --secid 1.600519
+bash scripts/install.sh --target cursor   # 生成 .cursor/mcp.json
 ```
 
-Skills 会引导 Claude 调用上述命令获取真实数据，**请勿让模型编造行情**。
+打开 **Cursor → Settings → MCP**，确认 `eastmoney-stock` 已加载（36 tools）。未出现则 Reload MCP 或重启 Cursor。
+
+> MCP 使用**本仓库绝对路径**，与 `--scope user` 无关；clone 到多个目录需各跑一次 `install.sh`。勿提交 `.cursor/mcp.json` 到 Git。
 
 ---
 
-## Codex CLI 安装与使用
+## 💬 用法
 
-### 安装
+### `/stock` 三种场景
 
-```bash
-cd skills
-bash scripts/install.sh --target codex --scope user
-bash scripts/install.sh --target codex --scope project
-
-# Codex 新标准路径（Agents）一并安装
-bash scripts/install.sh --target agents --scope user
+```mermaid
+flowchart LR
+  U["用户输入 /stock …"] --> R{意图识别}
+  R -->|查价| Q[quick-lookup]
+  R -->|分析 标的| B[flow B · ≥20 工具 · analysis-report]
+  R -->|板块 选股| C[flow C · ≥12 工具 · sector-report]
+  R -->|热点 情绪| D[flow D · market-brief]
+  B --> OUT[7 节报告 + §7 审核纪要]
+  C --> OUT2[板块评级 + 候选股 + 审核]
+  D --> OUT3[主线排序 + 快讯 + 资金]
 ```
 
-安装路径（两套路径 Codex 均可能扫描，脚本会同时链接）：
+| 你想做什么 | 示例 | 输出 |
+|-----------|------|------|
+| **查价** | `/stock 600519` | 现价、涨跌幅、简要指标 |
+| **个股全量分析** | `/stock 分析 黔源电力，看几日线` | 7 节报告 + 介入区间 + §7 审核 |
+| **板块 + 选股** | `/stock 半导体板块走势，挑几只` | 板块评级 + 3~5 只候选 + 理由 |
+| **市场热点** | `/stock-market` 或 `/stock 今天热点` | 主线排序 + 快讯 + 板块资金 |
 
-| 类型 | 全局 | 项目 |
-|------|------|------|
-| Codex Skills | `~/.codex/skills/` | `.codex/skills/` |
-| Agents 标准 | `~/.agents/skills/` | `.agents/skills/` |
+### 报告长什么样（节选）
 
-仅安装快捷指令：
+安装后直接 `/stock 分析 600519`，Agent 会拉 **≥20 次工具** 后输出类似结构：
 
-```bash
-bash scripts/install.sh --target codex --what slash
-bash scripts/install.sh --target agents --what slash
-```
+```markdown
+# 贵州茅台 · 综合分析
 
-安装后**重启 Codex CLI** 或新开 session。
+> 数据截止：2026-07-01 15:00 · 评级：**右侧等待** · 置信度：**6/10**
 
-### Codex 使用示例
+## 1. 结论与近期操作
 
-Codex 用 **`$技能名`** 显式调用（推荐）：
+**立场**：中期逻辑仍在，但短期需等 MA20 收复 + 放量确认再介入。  
+**看线**：5 日震荡、20 日承压；**介入区间** 1680~1720；**失效** 跌破 1650。
 
-```
-$stock 贵州茅台
-$stock 分析 宁德时代
-$stock-analyze 比亚迪
-$stock-fund 600519
-```
+## 2. 基本面与估值
+| 指标 | 数值 | 解读 |
+| PE(TTM) | … | 相对历史 … |
 
-也可输入 `/skills` 从列表中选择 `stock`、`stock-analyze` 等。
+## 3. 技术面 · 4. 资金筹码 · 5. 事件板块 · 6. 风险
 
-快捷 Skill 已设置 `allow_implicit_invocation: false`，**不会**被 Codex 自动误触发，需你手动 `$stock` 调用。
-
-### Codex 拉取数据
-
-在 Codex 工作目录打开本仓库，或确保 CLI 可执行：
-
-```bash
-cd /path/to/skills
-source .venv/bin/activate
-python scripts/em.py get_realtime_quote --secid 1.600519
-```
+## 7. 审核纪要
+| 轮次 | 结论 | 置信度变化 |
+| R2 数据审计 | 通过 | — |
+| R6 门禁 | 终稿 6/10 | 初稿 ≤6 ✓ |
 
 ---
+仅供参考，不构成投资建议。
+```
 
-## 快捷指令一览
+完整模板：[`agent-skills/stock-main/analysis-report.md`](agent-skills/stock-main/analysis-report.md)
+
+### 专项命令（单维度）
+
+仅当用户**明确只要某一维**时使用；要买卖建议请用 **`/stock 分析`**。
 
 | 作用 | Cursor / Claude | Codex | 示例 |
 |------|-----------------|-------|------|
-| **主命令** | **`/stock`** | **`$stock`** | **`/stock 分析 贵州茅台`** |
-| 全面分析（别名） | `/stock-analyze` | `$stock-analyze` | 同 `/stock 分析` |
-| 市场热点/情绪 | `/stock-market` | `$stock-market` | `/stock-market 今天热点` |
+| 主命令 | **`/stock`** | **`$stock`** | `/stock 分析 比亚迪` |
+| 市场热点 | `/stock-market` | `$stock-market` | `/stock-market 情绪` |
 | 资金面 | `/stock-fund` | `$stock-fund` | `/stock-fund 600519` |
-| 筹码 | `/stock-chip` | `$stock-chip` | `/stock-chip 比亚迪` |
+| 筹码 | `/stock-chip` | `$stock-chip` | `/stock-chip 宁德时代` |
 | K 线 | `/stock-kline` | `$stock-kline` | `/stock-kline 招商银行` |
 | 基本面 | `/stock-basic` | `$stock-basic` | `/stock-basic 五粮液` |
-| 板块 | `/stock-sector` | `$stock-sector` | `/stock-sector 半导体` |
-| 事件 | `/stock-news` | `$stock-news` | `/stock-news 隆基绿能` |
+| 板块 | `/stock-sector` | `$stock-sector` | `/stock-sector 电池` |
+| 舆情 | `/stock-news` | `$stock-news` | `/stock-news 隆基绿能` |
 
-专项命令（fund/chip/kline/basic）**只输出单维度**，不走 review-protocol；要买卖建议用 **`/stock 分析`**。
-
----
-
-## `/stock` 用法一览
-
-| 场景 | 示例 | 模板 |
-|------|------|------|
-| 个股全量分析 | `/stock 分析 600519` | analysis-report.md |
-| 板块 + 选股 | `/stock 电池板块走势，推荐几只` | sector-report.md |
-| 热点 / 情绪 | `/stock 今天有什么热点` 或 `/stock-market` | market-brief.md |
-
-### 个股分析
-
-分析时 **尽量拉全 MCP/CLI 工具（≥20 次）**，再写 **7 节终稿（含 §7 审核纪要）**。
-
-模板见 [`agent-skills/stock-main/analysis-report.md`](agent-skills/stock-main/analysis-report.md)。
-
-### 分析会拉哪些数据
-
-| 类别 | 工具 |
-|------|------|
-| **基本面** | 公司简介、**利润表/资产负债表/现金流**、估值、十大股东、股东户数 |
-| **行情技术** | 现价、K 线、MA5/20/60、相对沪深300、指标解读、短线盯盘 |
-| **资金筹码** | 个股/大盘资金流、筹码分布 |
-| **事件舆情** | 大事提醒、个股新闻/公告、**7×24 快讯**、板块成分、龙虎榜 |
-
-### 报告结构（7 节）
-
-1. **结论与近期操作** — 看几日线、操作倾向、介入区间、确认/回避条件  
-2. 基本面与估值  
-3. 技术面  
-4. 资金与筹码  
-5. 事件与板块（含 **情绪热点**）  
-6. 主要风险  
-7. **§7 审核纪要**（review-protocol 门禁输出）
-
-### 用法示例
-
-```
-/stock 分析 600519
-/stock 帮我看看能不能买，看几日线
-/stock 半导体板块最近怎么样，挑几只
-/stock 今天市场情绪和热点
-```
-
-`/stock-analyze` 与 `/stock 分析` 相同。
-
----
-
-## 安装脚本完整说明
+### Claude Code / Codex
 
 ```bash
-bash scripts/install.sh --help
+# Claude：Skills 目录名 → slash 命令
+/stock 贵州茅台
+/stock-analyze 比亚迪
+
+# Codex：显式 $ 调用（推荐）
+$stock 分析 宁德时代
+$stock-fund 600519
 ```
 
-| 参数 | 说明 |
-|------|------|
-| `--target cursor` | 仅 Cursor |
-| `--target claude` | 仅 Claude Code |
-| `--target codex` | 仅 Codex（`~/.codex/skills`） |
-| `--target agents` | Agents 标准路径（`~/.agents/skills`） |
-| `--target all` | 以上全部 |
-| `--scope user` | 安装到用户主目录（默认） |
-| `--scope project` | 安装到当前仓库 |
-| `--what skills` | 仅分析 Skills |
-| `--what commands` | 仅 Cursor 命令 |
-| `--what slash` | 仅 Claude/Codex 快捷 Skills |
-| `--what all` | 全部（默认） |
-| `--copy` | 复制文件（非符号链接） |
-| `--unlink` | 卸载 |
-
-**常用组合：**
-
-```bash
-# 三端一次装齐（最常用）
-bash scripts/install.sh --target all --scope user
-
-# 团队仓库：项目级 + 可 commit
-bash scripts/install.sh --target all --scope project
-
-# 卸载
-bash scripts/install.sh --target all --unlink
-```
-
-**Windows（PowerShell）：**
-
-```powershell
-cd skills
-powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -Target cursor -Scope user
-# 量化: 加 -WithMl
-```
+Claude/Codex 无 MCP 时，Skills 会引导 Agent 调用 `scripts/em.py` 拉数——**请勿让模型编造行情**。
 
 ---
 
-## CLI 参考（不依赖 AI 工具）
+## 🏗 架构
+
+```mermaid
+flowchart TB
+  subgraph entry ["用户入口"]
+    C["Cursor /stock + MCP"]
+    CL["Claude /stock"]
+    CX["Codex $stock"]
+    CLI["scripts/em.py"]
+  end
+
+  subgraph orch ["编排层 agent-skills"]
+    MAIN["stock-main 主编排"]
+    REV["review-protocol B/C/D"]
+    DIM["专项 analysis skills ×12"]
+  end
+
+  subgraph data ["数据层 eastmoney"]
+    MCP["mcp_server · 36 tools"]
+    EM["东方财富 API"]
+    AK["AkShare 降级"]
+    XQ["雪球 Cookie / 热榜"]
+  end
+
+  C --> MAIN
+  CL --> MAIN
+  CX --> MAIN
+  CLI --> EM
+  MAIN --> REV
+  MAIN --> DIM
+  MAIN --> MCP
+  MCP --> EM
+  EM --> AK
+  EM --> XQ
+```
+
+**个股分析数据覆盖（B 流程）**
+
+| 维度 | 工具示例 |
+|------|---------|
+| 基本面 | 三表财报、估值、股东、户数 |
+| 技术 | K 线、MA、相对沪深300、指标解读、短线盯盘 |
+| 资金筹码 | 个股/大盘资金流、筹码分布 |
+| 事件舆情 | 大事、新闻、7×24 快讯、板块、龙虎榜 |
+| 量化辅助 | Alpha158/360、`get_quant_technical`（含 OOS 状态） |
+
+---
+
+## 🛠 无 AI 也能用（CLI）
 
 ```bash
 source .venv/bin/activate
 
-python scripts/em.py list
-python scripts/em.py resolve_symbol --query "贵州茅台"
-python scripts/em.py get_realtime_quote --secid 1.600519
-python scripts/em.py get_kline --secid 1.600519 --limit 60
-python scripts/em.py get_stock_fund_flow --secid 1.600519
-python scripts/em.py get_chip_distribution --secid 1.600519
-python scripts/em.py get_sector_detail --board-name "银行" --detail-type fund_flow
-python scripts/em.py compare_performance --secid 1.600519 --benchmark-code 000300
+python scripts/em.py resolve_symbol --query "比亚迪"
+python scripts/em.py get_realtime_quote --secid 0.002594
+python scripts/em.py get_kline --secid 0.002594 --limit 60
+python scripts/em.py get_stock_fund_flow --secid 0.002594
+python scripts/em.py get_chip_distribution --secid 0.002594
+python scripts/em.py get_sector_detail --board-name "电池" --detail-type fund_flow
+python scripts/em.py get_quant_technical --secid 0.002594
+python scripts/em.py get_review_protocol --flow B
 ```
+
+**secid 规则**：上交所 `1.{代码}` · 深交所/北交所 `0.{代码}`
 
 ---
 
-## 项目结构
+## 📚 文档
 
-Agent 路由与架构详见 [`AGENTS.md`](AGENTS.md)。参与贡献见 [`CONTRIBUTING.md`](CONTRIBUTING.md)。
-
-```
-.
-├── agent-skills/          # 分析 workflow（13 个 SKILL，含 stock-main 主编排）
-├── agent-commands/        # Cursor 快捷指令（*.md）
-├── agent-slash-skills/    # Claude/Codex 快捷指令（SKILL.md 目录）
-├── eastmoney/             # Python 数据层（36 个 CLI/MCP 工具）
-├── mcp_server/            # Cursor MCP：eastmoney-stock
-├── scripts/
-│   ├── em.py              # CLI
-│   ├── install.sh         # 安装脚本
-│   └── test.sh            # 测试
-├── .cursor/
-│   ├── mcp.json.example   # MCP 模板（install.sh 生成本地 mcp.json）
-│   ├── skills/            # 安装后生成
-│   └── commands/          # 安装后生成
-├── .claude/skills/        # 安装后生成（项目级）
-├── .codex/skills/         # 安装后生成（项目级）
-└── .agents/skills/        # 安装后生成（项目级）
-```
-
----
-
-## 分析 Skills 列表
-
-| Skill | 用途 |
-|-------|------|
-| **`stock-main`** | **`/stock` 主编排：全量拉数 + 6 节报告** |
-| `stock-analysis-orchestrator` | 全量分析工具清单 |
-| `stock-quick-lookup` | 快速查价 |
-| `stock-fundamental-analysis` | 基本面 |
-| `stock-technical-analysis` | 技术面 / K 线 |
-| `stock-capital-flow` | 资金面 |
-| `stock-chip-analysis` | 筹码 |
-| `stock-historical-analysis` | 历史统计 |
-| `stock-sector-analysis` | 板块 |
-| `stock-event-research` | 新闻 / 公告 / 股东 |
-| `stock-report-review` | 报告多重审核（配合 review-protocol） |
-| `stock-quant-research` | Alpha158/360 量化研发纪律 |
-| `eastmoney-api` | 工具规范、secid、限流 |
-
----
-
-## 功能概览
-
-| 能力 | 说明 |
+| 文档 | 内容 |
 |------|------|
-| **`/stock` 全量分析** | 基本面三表 + 技术 + 资金 + 筹码 + 事件 |
-| 实时行情 | 价格、涨跌幅、量额、PE、市值 |
-| K 线 | 日/周/月/分钟，前复权/后复权 |
-| 基本面 | 财报、估值、公司简介 |
-| 资金面 | 主力净流入、排名、大盘资金 |
-| 筹码 | 获利比例、成本区间、集中度 |
-| 历史 | 涨跌幅、回撤、相对沪深300 |
-| 板块 | 行业/概念、成分股、板块资金流 |
-| 事件 | 新闻、公告、研报、龙虎榜 |
+| [AGENTS.md](AGENTS.md) | Agent 架构、命令路由、开发约定 |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | 贡献、测试、发布流程 |
+| [docs/xueqiu-auth.md](docs/xueqiu-auth.md) | 雪球 Cookie 授权 E2E |
+| [CHANGELOG.md](CHANGELOG.md) | 版本变更 |
+| [ROADMAP.md](ROADMAP.md) | 路线图 |
+| [SECURITY.md](SECURITY.md) | 安全报告 |
+| [models/README.md](models/README.md) | 量化演示权重 / OOS 说明 |
 
 ---
 
-## secid 规则
-
-| 市场 | 格式 | 示例 |
-|------|------|------|
-| 上交所 | `1.{代码}` | `1.600519` |
-| 深交所 / 北交所 | `0.{代码}` | `0.000001` |
-
----
-
-## MCP 工具（36 个，Cursor）
-
-含：7×24 快讯、雪球热门资讯（xueqiu_livenews）、板块模糊搜索、Alpha158/360 量化、审核协议等。完整列表：`python scripts/em.py list`
-
----
-
-## AkShare 降级
-
-东方财富直连失败时自动降级 AkShare：
+## 🧪 质量保障
 
 ```bash
-export EASTMONEY_DISABLE_FALLBACK=1   # 禁用降级
+bash scripts/check.sh              # 109 项单测 + MCP parity
+LIVE=1 bash scripts/smoke_live.sh  # 真实接口冒烟（需网络）
 ```
+
+CI：Ubuntu + **Windows**（`test.yml`）· 定时 live smoke（`live-smoke.yml`）
 
 ---
 
-## 测试
+## ⚠️ 使用须知
 
-```bash
-# 单元测试（默认，CI 同款，109 项）
-bash scripts/test.sh
-
-# 发布前完整检查（测试 + MCP parity）
-bash scripts/check.sh
-
-# 真实接口冒烟（需网络，默认不在 CI 跑）
-LIVE=1 bash scripts/smoke_live.sh
-```
-
-GitHub Actions 在 push/PR 到 `master` 时自动运行 `test.sh`（见 `.github/workflows/test.yml`）。另有一个 **可选** 的定时真实接口冒烟 `live-smoke.yml`（`continue-on-error: true`，接口异常时不阻塞主 CI）。
-
-依赖锁定：`requirements.lock` 记录主包精确版本；`install.sh` 优先使用 lock 文件。更新 lock：`bash scripts/lock_deps.sh`。
+- 东方财富 / 雪球为**非官方**接口，内置限流（≥0.6s）与缓存
+- 演示 LGB 模型 **OOS 未通过**，量化结论仅研究辅助
+- 数据可能有延迟，结论须人工复核
+- 请勿用于高频交易或商业再分发
 
 ---
 
-## 注意事项
+## 🤝 参与
 
-- 东方财富为非官方公开接口，内置限流（≥0.6s）与缓存
-- 数据可能有延迟，结论需人工复核
-- 请勿用于高频交易或商业分发
+欢迎 Issue / PR。详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+如果这个项目对你有帮助，欢迎 **Star** ⭐ 支持持续维护。
 
 ---
 
 ## License
 
-MIT
+[MIT](LICENSE)

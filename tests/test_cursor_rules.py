@@ -35,6 +35,10 @@ GUIDE_DOCS = (
     ROOT / "docs" / "xueqiu-auth.md",
 )
 
+README_ASSETS = (
+    ROOT / "docs" / "assets" / "banner.png",
+)
+
 RELEASE_NOTES_SCRIPT = ROOT / "scripts" / "release_notes.py"
 
 
@@ -56,6 +60,10 @@ class TestProjectGovernance(unittest.TestCase):
 
     def test_guide_docs_present(self) -> None:
         for path in GUIDE_DOCS:
+            self.assertTrue(path.is_file(), str(path.relative_to(ROOT)))
+
+    def test_readme_assets_present(self) -> None:
+        for path in README_ASSETS:
             self.assertTrue(path.is_file(), str(path.relative_to(ROOT)))
 
     def test_release_notes_extracts_version(self) -> None:

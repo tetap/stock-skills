@@ -13,6 +13,7 @@
 
 ### 变更
 
+- **README 全面重设计**：横幅图、架构/流程 Mermaid、快速开始、用法示例与 GitHub 徽章
 - `get_review_protocol(flow=C|D)` 返回 `required_tools` 清单
 - 板块 `search_sectors` 单测回归（空 query、类型过滤、打分、跨类型）
 
