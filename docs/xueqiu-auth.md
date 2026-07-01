@@ -68,7 +68,22 @@ python scripts/em.py get_xueqiu_auth_guide --reason missing_token
 export XUEQIU_TOKEN='...'   # 对应 Cookie 名 xq_a_token
 # 或整串 Cookie（较少用）
 export XUEQIUTOKEN='xq_a_token=...; ...'
+# 复用已打开的 Chrome 会话（推荐，可绕过 md5__1038 WAF）
+export XUEQIU_CDP_URL='http://127.0.0.1:9222'
 ```
+
+**Chrome 远程调试（个股帖子 API）**：
+
+1. 完全退出 Chrome 后，用调试端口启动（macOS 示例）：
+   ```bash
+   /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222
+   ```
+2. 在 Chrome 中正常登录并打开目标个股页（如 https://xueqiu.com/S/SH600519 ）
+3. `export XUEQIU_CDP_URL=http://127.0.0.1:9222`
+4. 安装可选依赖：`pip install playwright && playwright install chromium`
+5. 重试 `get_news_and_reports --source xueqiu`
+
+`get_xueqiu_auth_status` 会返回 `stock_api_probe`：`curl_ok=false` 且 `cdp_ok=true` 表示 CDP 通路正常。
 
 ---
 

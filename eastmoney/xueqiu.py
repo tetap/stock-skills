@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import time
 from typing import Any
 
@@ -91,9 +92,10 @@ def xueqiu_waf_hint_row(*, symbol: str, code: str) -> dict[str, Any]:
         "time": time.strftime("%Y-%m-%d %H:%M:%S"),
         "title": f"雪球个股讨论需通过滑动验证：{stock_url}",
         "summary": (
-            "已检测到登录 Cookie，但程序化请求个股帖子被雪球 WAF 拦截。"
-            f"请在 Chrome 打开 {stock_url} 手动完成滑动验证后重试；"
-            "讨论热度/热门资讯仍可正常使用。"
+            "已检测到登录 Cookie，但 Python 直连 API 被雪球 WAF 拦截（需浏览器动态签名 md5__1038）。"
+            f"请在 Chrome 打开 {stock_url}；或启动 Chrome 时加 --remote-debugging-port=9222 "
+            "并 export XUEQIU_CDP_URL=http://127.0.0.1:9222 后重试。"
+            "讨论热度/热门资讯仍可用。"
         ),
         "provider": "xueqiu_waf_hint",
         "url": stock_url,
@@ -168,11 +170,14 @@ def _warm_xq_session(client: EastMoneyClient) -> None:
     if not cookie:
         return
     try:
+        from eastmoney.xueqiu_http import xueqiu_http_get
+
         client._throttle()
-        client._session.get(
+        xueqiu_http_get(
             XUEQIU_LOGIN_URL,
+            None,
             headers=_xq_headers(referer=XUEQIU_LOGIN_URL, cookie=cookie),
-            timeout=15,
+            cookie=cookie,
         )
         client._cache.set(flag, True, 300)
     except Exception:
@@ -216,8 +221,11 @@ def _xq_session_get_json(
     cache_key: str | None = None,
     cache_ttl: float = 120,
     warm_session: bool = True,
+    try_cdp: bool = False,
 ) -> tuple[dict[str, Any] | None, str | None]:
-    """雪球 xueqiu.com 域 JSON（livenews / 帖子等，需 Cookie）。"""
+    """雪球 xueqiu.com 域 JSON（curl_cffi 浏览器指纹；个股 API 可回退 Chrome CDP）。"""
+    from eastmoney.xueqiu_http import xueqiu_http_get, xueqiu_http_get_json_via_cdp
+
     cookie, _source = resolve_xueqiu_cookie(try_browser=True)
     has_cookie = bool(cookie)
     if not cookie:
@@ -233,35 +241,49 @@ def _xq_session_get_json(
     if warm_session:
         _warm_xq_session(client)
 
+    headers = _xq_headers(referer=referer, cookie=cookie)
+    data: dict[str, Any] | None = None
+    reason: str | None = None
+
     try:
         client._throttle()
-        resp = client._session.get(
+        status_code, text = xueqiu_http_get(
             url,
-            params=params,
-            headers=_xq_headers(referer=referer, cookie=cookie),
-            timeout=15,
+            params,
+            headers=headers,
+            cookie=cookie,
         )
-        if resp.status_code != 200 or _is_waf_html(resp.text):
+        if status_code == 200 and not _is_waf_html(text):
+            data = json.loads(text)
+        else:
             reason = _xq_failure_reason(
-                text=resp.text,
-                status_code=resp.status_code,
+                text=text,
+                status_code=status_code,
                 has_cookie=has_cookie,
             )
-            if require_auth:
-                detail = None
-                if reason == "waf_captcha":
-                    sym = params.get("symbol")
-                    if sym:
-                        detail = f"请在 Chrome 打开 https://xueqiu.com/S/{sym} 完成滑动验证。"
-                raise XueqiuAuthRequired(reason=reason, detail=detail)
-            return None, reason
-        data = resp.json()
     except XueqiuAuthRequired:
         raise
     except Exception:
+        reason = "auth_failed"
+
+    if data is None and try_cdp and reason in {"waf_captcha", "blocked"}:
+        data = xueqiu_http_get_json_via_cdp(url, params, referer=referer)
+        if data is not None:
+            reason = None
+
+    if data is None:
         if require_auth:
-            raise XueqiuAuthRequired(reason="auth_failed")
-        return None, "auth_failed"
+            detail = None
+            if reason == "waf_captcha":
+                sym = params.get("symbol")
+                if sym:
+                    detail = (
+                        f"请在 Chrome 打开 https://xueqiu.com/S/{sym} 完成滑动验证；"
+                        "或启动 Chrome --remote-debugging-port=9222 并设置 XUEQIU_CDP_URL。"
+                    )
+                raise XueqiuAuthRequired(reason=reason or "auth_failed", detail=detail)
+            raise XueqiuAuthRequired(reason=reason or "auth_failed")
+        return None, reason
 
     if not isinstance(data, dict):
         return None, "auth_failed"
@@ -596,6 +618,7 @@ def xueqiu_stock_posts(
             require_auth=False,
             cache_key=cache_key,
             cache_ttl=120 if cache_key else 0,
+            try_cdp=True,
         )
         if data:
             rows = _parse_stock_post_items(data, limit=limit)

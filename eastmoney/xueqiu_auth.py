@@ -241,6 +241,15 @@ def xueqiu_cookie_diagnostics(*, try_browser: bool = True) -> dict[str, Any]:
     env_cookie, env_src = _load_env_cookie()
     resolved, resolved_src = resolve_xueqiu_cookie(try_browser=try_browser)
 
+    stock_api_probe: dict[str, Any] | None = None
+    if resolved:
+        try:
+            from eastmoney.xueqiu_http import probe_stock_status_api
+
+            stock_api_probe = probe_stock_status_api(cookie=resolved)
+        except Exception:
+            stock_api_probe = None
+
     return {
         "authenticated": bool(resolved),
         "cookie_source": resolved_src,
@@ -267,7 +276,8 @@ def xueqiu_cookie_diagnostics(*, try_browser: bool = True) -> dict[str, Any]:
             "给 Cursor「完全磁盘访问权限」后重启，或使用 XUEQIU_TOKEN 环境变量。"
         ),
         "waf_note": (
-            "若 authenticated 为 true 但个股帖子仍失败：雪球 /S/ 个股页有滑动验证(WAF)，"
-            "需在 Chrome 打开对应个股页手动验证；仅登录 hq 不够。"
+            "若 authenticated 为 true 但个股帖子仍失败：雪球 API 需浏览器动态签名 md5__1038，"
+            "非 Cookie 缺失。可启用 Chrome --remote-debugging-port=9222 + XUEQIU_CDP_URL。"
         ),
+        "stock_api_probe": stock_api_probe,
     }
