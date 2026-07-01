@@ -30,6 +30,9 @@ jobs:
 
   test-windows:
     runs-on: windows-latest
+    env:
+      PYTHONUTF8: "1"
+      PYTHONIOENCODING: utf-8
     steps:
       - uses: actions/checkout@v4
 
