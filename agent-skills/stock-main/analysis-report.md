@@ -97,7 +97,18 @@
 
 **§3 技术面** 优先调用 `get_quant_technical`；若 5 日序列分与 60 日相反，必须写 **quant_verdict.summary**（如「短线改善·中线仍弱」），禁止只写一个合成数。
 
-> **策略 vs 研究**：`quant_verdict` 是实时因子解读，**不等于**通过样本外回测的策略信号。若 `oos_status.oos_passed` 为 `false` 或 `null`，或 `quant_verdict.oos_warning` 存在，§3 须标注「量化信号未过样本外检验，仅辅助」，评级上限「右侧等待」。
+**时序预测分位数**（`timeseries_forecast.quantiles`，DeepAR/TFT 可用时）：
+
+| 字段 | 含义 | 报告写法 |
+|------|------|----------|
+| `prices.p10` / `p50` / `p90` | 预测 horizon 末日的价格区间 | 写「5 日（或 horizon）目标价 P10~P90：X~Y 元，中位 Z」 |
+| `returns.p10` / `p50` / `p90` | 相对现价的隐含涨跌幅 | 与 Alpha158/360 方向交叉验证 |
+| `band_width_pct` | (P90−P10)/现价 | 区间宽度，越大越不确定 |
+| `uncertainty` | `窄` / `中` / `宽`（≥8% 为宽） | **宽** 时须写「预测区间较宽，宜降仓或观望」；勿单独用 P50 作强信号 |
+
+`quant_verdict.timeseries_model.quantiles` 与 `timeseries_forecast.quantiles` 同源；若 `quant_verdict.detail` 已含宽区间提示，§3 表格须复述 P10~P90 数值。
+
+> **策略 vs 研究**：`quant_verdict` 是实时因子解读，**不等于**通过样本外回测的策略信号。若 `oos_status.oos_passed` 为 `false` 或 `null`，或 `quant_verdict.oos_warning` 存在，§3 须标注「量化信号未过样本外检验，仅辅助」，评级上限「右侧等待」。Walk-forward / `backtest_quant.py` 结果仅用于研究备忘，**不得**直接写入 §1 交易计划。
 
 **§5 事件与板块** 必须写：个股新闻 2 条 + 市场热点/情绪 1~2 条 + **雪球讨论热度排名**（若有）。
 
@@ -155,6 +166,7 @@
 | Alpha360 序列分 | score_5d / score_60d / score（合成） | 5 日 + 60 日，短长分歧须分开写 |
 | Alpha158 因子分 | inference.score / verdict | 表格 158 维 |
 | **quant_verdict** | get_quant_technical | **表格+序列综合**，分歧时写 summary |
+| **时序分位数** | timeseries_forecast.quantiles | P10/P50/P90 价格与涨跌幅；uncertainty=宽 须降仓提示 |
 | 相对沪深300 | {来自 compare_performance} | 强/弱 |
 | 关键信号 | 指标解读 1~2 条 | |
 
@@ -224,3 +236,4 @@ R1 初稿 → R2 审计 → R3 ≥5 个魔鬼问题 → R4 一致性矩阵 → R
 - [ ] §1 四维度 + quant_verdict + 交易计划 + 「若我错了」
 - [ ] 工具调用 ≥20 次
 - [ ] 158/360 短长分歧已解释
+- [ ] 若有时序预测：`quantiles.uncertainty` 与 P10~P90 已写入 §3（宽区间须呼应 detail）
