@@ -21,7 +21,7 @@ python scripts/em.py get_realtime_quote --secid 1.600519
 
 ## MCP（推荐）
 
-项目已包含 `.cursor/mcp.json`，在 Cursor 设置中启用 MCP 后，模型可直接调用 `eastmoney-stock` 下的 **33 个工具**。
+项目已包含 `.cursor/mcp.json`，在 Cursor 设置中启用 MCP 后，模型可直接调用 `eastmoney-stock` 下的 **34 个工具**。
 
 重启 Cursor 或刷新 MCP 后生效。MCP 命令：
 
@@ -38,7 +38,10 @@ python -m mcp_server
 | **Alpha158** | 158 维表格因子 | LightGBM / Linear / TabNet |
 
 ```bash
-# Alpha158 表格因子（默认 highlights + 因子分）
+# 量化综合（推荐：158+360+quant_verdict）
+python scripts/em.py get_quant_technical --secid 0.002074
+
+# Alpha158 表格因子
 python scripts/em.py get_alpha158_factors --secid 0.002074
 python scripts/em.py get_alpha158_score --secid 0.002074
 python scripts/em.py get_alpha158_factors --secid 0.002074 --include-all-factors
@@ -48,7 +51,16 @@ python scripts/em.py get_alpha360_tensor --secid 0.002074
 python scripts/em.py get_alpha360_score --secid 0.002074
 ```
 
-分析时建议 **158 表格分 + 360 序列分** 交叉验证。
+分析时建议 **158 表格分 + 360 序列分** 交叉验证；`get_quant_technical` 返回 `model_status` 标明 LGB/TCN 是否已加载。
+
+**模型权重**（可选，无权重时自动启发式）：
+```bash
+pip install -r requirements-ml.txt
+python scripts/train_quant_models.py --lgb --limit 500 --grid
+python scripts/backtest_quant.py --secid 0.300204 --grid-thresholds
+python scripts/train_quant_models.py --tcn-init   # 仅占位结构，须 Qlib 重训
+```
+权重路径见 `models/README.md`；研发纪律见 `agent-skills/stock-quant-research/SKILL.md`。
 
 ## AkShare 降级
 
@@ -110,7 +122,7 @@ bash scripts/test.sh
 - 深交所/北交所：`0.{6位代码}`（如 `0.000001`）
 - 不确定时先调 `resolve_symbol`
 
-## 33 个工具
+## 34 个工具
 
 | 工具 | 主要参数 |
 |------|----------|
@@ -142,10 +154,12 @@ bash scripts/test.sh
 | get_short_term_monitor | --code |
 | get_limit_up_history | --code, --limit |
 | get_xueqiu_auth_guide | --reason |
+| get_xueqiu_auth_status | （检测 Cookie / 浏览器） |
+| get_xueqiu_data | --code, --data-type report/capital_flow/quote/…, --limit |
 | get_alpha360_tensor | --secid, --seq-len, --include-tensor |
 | get_alpha360_score | --secid |
 | get_alpha158_factors | --secid, --include-all-factors |
-| get_alpha158_score | --secid |
+| get_quant_technical | --secid |
 
 ## 限流与缓存
 

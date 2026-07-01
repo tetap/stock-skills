@@ -7,7 +7,8 @@ from typing import Any
 from eastmoney.client import EastMoneyClient
 from eastmoney.config import DATACENTER_URL
 from eastmoney.news_sources import em_stock_news, merge_news_rows, sina_stock_news
-from eastmoney.xueqiu import xueqiu_stock_sentiment
+from eastmoney.xueqiu import xueqiu_auth_hint_row, xueqiu_stock_sentiment
+from eastmoney.xueqiu_auth import XueqiuAuthRequired
 
 
 def get_shareholders(client: EastMoneyClient, code: str, *, limit: int = 10) -> list[dict[str, Any]]:
@@ -165,11 +166,21 @@ def get_news_and_reports(
                 sina_stock_news(client, code, name=stock_name, limit=limit)
             )
         if source in {"xueqiu", "all"}:
-            groups.append(
-                xueqiu_stock_sentiment(
-                    client, code, name=stock_name, limit=min(limit, 5)
+            try:
+                groups.append(
+                    xueqiu_stock_sentiment(
+                        client,
+                        code,
+                        name=stock_name,
+                        limit=min(limit, 8),
+                        require_auth=(source == "xueqiu"),
+                        include_reports=True,
+                    )
                 )
-            )
+            except XueqiuAuthRequired as exc:
+                if source == "xueqiu":
+                    raise
+                groups.append([xueqiu_auth_hint_row(reason=exc.reason)])
         rows = merge_news_rows(*groups, limit=limit) if len(groups) > 1 else (groups[0] if groups else [])
         if rows:
             return rows

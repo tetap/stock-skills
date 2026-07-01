@@ -84,18 +84,34 @@ def build_alpha360_from_bars(
     high_max = max(row[1] for row in tensor_rnn)
     low_min = min(row[2] for row in tensor_rnn)
 
+    raw_closes = [float(b["close"]) for b in window]
+
+    def _pct_change(days: int) -> float | None:
+        if len(raw_closes) <= days:
+            return None
+        base = raw_closes[-1 - days]
+        if base == 0:
+            return None
+        return round((raw_closes[-1] / base - 1) * 100, 2)
+
     early_close = sum(close_series[:5]) / 5
     late_close = sum(close_series[-5:]) / 5
     early_vol = sum(volume_series[:5]) / 5
     late_vol = sum(volume_series[-5:]) / 5
 
-    slope = _linear_slope(close_series)
-    if slope > 0.002:
-        pattern = "上升通道"
-    elif slope < -0.002:
-        pattern = "下降通道"
-    else:
-        pattern = "横盘震荡"
+    slope_60 = _linear_slope(close_series)
+    slope_5 = _linear_slope(close_series[-5:]) if len(close_series) >= 5 else slope_60
+    slope_10 = _linear_slope(close_series[-10:]) if len(close_series) >= 10 else slope_60
+
+    def _pattern(s: float) -> str:
+        if s > 0.002:
+            return "上升通道"
+        if s < -0.002:
+            return "下降通道"
+        return "横盘震荡"
+
+    pattern_60 = _pattern(slope_60)
+    pattern_5 = _pattern(slope_5)
 
     result: dict[str, Any] = {
         "seq_len": seq_len,
@@ -126,8 +142,15 @@ def build_alpha360_from_bars(
             },
         },
         "sequence_summary": {
-            "pattern": pattern,
-            "close_slope_norm": round(slope, 6),
+            "pattern": pattern_60,
+            "pattern_5d": pattern_5,
+            "pattern_60d": pattern_60,
+            "close_slope_norm": round(slope_60, 6),
+            "close_slope_5d": round(slope_5, 6),
+            "close_slope_10d": round(slope_10, 6),
+            "close_change_5d_pct": _pct_change(5),
+            "close_change_10d_pct": _pct_change(10),
+            "close_change_20d_pct": _pct_change(20),
             "close_change_early_vs_late_pct": round((late_close / early_close - 1) * 100, 2)
             if early_close
             else None,

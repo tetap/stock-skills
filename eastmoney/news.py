@@ -14,7 +14,29 @@ from eastmoney.news_sources import (
     sina_live_flash,
     sina_market_roll,
 )
-from eastmoney.xueqiu import xueqiu_hot_as_news
+from eastmoney.xueqiu import xueqiu_hot_as_news, xueqiu_livenews_as_news
+
+
+def _append_xueqiu_livenews(
+    groups: list[list[dict[str, Any]]],
+    client: EastMoneyClient,
+    *,
+    limit: int,
+    source: str,
+) -> None:
+    """雪球热门资讯 livenews/list.json?category=6（需 Cookie）。"""
+    require_auth = source == "xueqiu"
+    rows = xueqiu_livenews_as_news(
+        client,
+        limit=limit,
+        require_auth=require_auth,
+    )
+    if require_auth:
+        groups.append(rows)
+        return
+    news_only = [r for r in rows if r.get("provider") == "xueqiu_livenews"]
+    if news_only:
+        groups.append(news_only)
 
 
 def get_market_news(
@@ -27,7 +49,7 @@ def get_market_news(
 ) -> list[dict[str, Any]]:
     """市场资讯。
 
-    news_type: flash / headline / breakfast / sina_roll / sina_live / xueqiu_hot
+    news_type: flash / headline / breakfast / sina_roll / sina_live / xueqiu_hot / xueqiu_livenews
     source: eastmoney | sina | xueqiu | all（默认合并多源）
     """
     fetch_limit = min(limit * 3, 50) if keyword else limit
@@ -49,6 +71,12 @@ def get_market_news(
             groups.append(sina_live_flash(client, limit=fetch_limit))
             groups.append(sina_market_roll(client, limit=fetch_limit))
         if source in {"xueqiu", "all"} and news_type == "flash":
+            _append_xueqiu_livenews(
+                groups,
+                client,
+                limit=min(fetch_limit, 15),
+                source=source,
+            )
             groups.append(xueqiu_hot_as_news(client, limit=min(fetch_limit, 10)))
     elif news_type == "sina_roll":
         groups.append(sina_market_roll(client, limit=fetch_limit, keyword=keyword))
@@ -57,10 +85,18 @@ def get_market_news(
     elif news_type == "xueqiu_hot":
         if source in {"xueqiu", "all", "eastmoney", "sina"}:
             groups.append(xueqiu_hot_as_news(client, limit=fetch_limit))
+    elif news_type == "xueqiu_livenews":
+        if source in {"xueqiu", "all", "eastmoney", "sina"}:
+            _append_xueqiu_livenews(
+                groups,
+                client,
+                limit=fetch_limit,
+                source=source if source == "xueqiu" else "all",
+            )
     else:
         raise ValueError(
             f"不支持的 news_type: {news_type}，"
-            "可选 flash/headline/breakfast/sina_roll/sina_live/xueqiu_hot"
+            "可选 flash/headline/breakfast/sina_roll/sina_live/xueqiu_hot/xueqiu_livenews"
         )
 
     rows = merge_news_rows(*groups, limit=fetch_limit) if groups else []

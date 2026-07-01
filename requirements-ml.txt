@@ -1,4 +1,5 @@
-# 可选 ML 依赖（Alpha360 TCN 推理、npy 导出）
+# 可选 ML 依赖（Alpha360 TCN、Alpha158 LightGBM、npy 导出）
 # pip install -r requirements-ml.txt
 torch>=2.0.0
 numpy>=1.24.0
+lightgbm>=4.0.0

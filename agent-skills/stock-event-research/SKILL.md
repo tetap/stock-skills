@@ -21,6 +21,7 @@ description: >-
 # 默认合并东财 7×24 + 新浪直播/滚动 + 雪球讨论热榜（top10）
 python scripts/em.py get_market_news --news-type flash --limit 30 --source all
 python scripts/em.py get_market_news --news-type flash --keyword 电池 --limit 15
+python scripts/em.py get_market_news --news-type xueqiu_livenews --limit 15 --source xueqiu
 python scripts/em.py get_market_news --news-type xueqiu_hot --limit 20 --source xueqiu
 python scripts/em.py get_market_news --news-type sina_live --limit 20 --source sina
 python scripts/em.py get_market_news --news-type headline --limit 15 --source eastmoney
@@ -41,27 +42,35 @@ python scripts/em.py get_news_and_reports --code 002074 --content-type announcem
 | `--source all` | 东财 + 新浪 + 雪球热度（默认） |
 | `--source eastmoney` | 仅东财资讯搜索 / 7×24 |
 | `--source sina` | 仅新浪 7×24 / 滚动（个股需 `--stock-name`） |
-| `--source xueqiu` | 雪球讨论热榜 / 个股讨论热度 |
+| `--source xueqiu` | 雪球 **热门资讯(livenews)** + 讨论热榜 + 帖子/研报（后两者需 Cookie） |
 
-## 雪球 xq_a_token（帖子正文）
+**热门资讯 API**：`https://xueqiu.com/statuses/livenews/list.json?category=6`（hq 页热门流，**需登录 Cookie**）
 
-讨论**热榜/热度**无需登录。拉**个股帖子**需浏览器 Cookie 中的 `xq_a_token`：
+## 雪球登录与 pysnowball（研报/资金/帖子）
 
-1. 打开 [雪球](https://xueqiu.com) 并完成登录（未登录则先授权/注册）。
-2. 开发者工具 → Application → Cookies → `xueqiu.com` → 复制 `xq_a_token`。
-3. 配置环境变量：`export XUEQIU_TOKEN='粘贴值'`（MCP 用户写入 `~/.cursor/mcp.json` 的 `env.XUEQIU_TOKEN`）。
-4. 重启 Cursor 或终端后重试。
+讨论**热榜**无需登录。帖子、研报、资金流向等需 Cookie：
 
-**Agent 流程**：若返回含 `provider: xueqiu_auth_hint` 或帖子为空且需雪球正文：
+1. 打开 **[https://xueqiu.com/hq](https://xueqiu.com/hq)** 并完成登录。
+2. Cookie 复制 `xq_a_token` → `export XUEQIU_TOKEN='值'`（或整串 `XUEQIUTOKEN='xq_a_token=...;u=...;'`）。
+3. 可选：`pip install browser-cookie3` 后自动从 Chrome/Safari 读取（须本机已登录）。
+4. MCP：写入 `~/.cursor/mcp.json` → `eastmoney-stock.env.XUEQIU_TOKEN`，重启 Cursor。
 
-1. 调用 `get_xueqiu_auth_guide`（或直接把上述步骤发给用户），并打开 https://xueqiu.com 引导登录。
-2. **暂停**帖子相关步骤，等待用户回复「已配置雪球 token」。
-3. 再执行 `get_news_and_reports --source xueqiu` 或 `--source all`。
+**无 Cookie 时**：工具返回 `"interrupt": true`，Agent **必须中断**并提示用户先登录 hq 页，勿编造帖子内容。
 
 ```bash
+python scripts/em.py get_xueqiu_auth_status
 python scripts/em.py get_xueqiu_auth_guide
-python scripts/em.py get_xueqiu_auth_guide --reason auth_failed
+python scripts/em.py get_xueqiu_data --code 600519 --data-type report --limit 5
+python scripts/em.py get_xueqiu_data --code 002074 --data-type capital_flow
+python scripts/em.py get_market_news --news-type xueqiu_hot --limit 10 --source xueqiu
 ```
+
+pysnowball 支持的 `data_type`：`report` `earningforecast` `capital_flow` `capital_history` `margin` `blocktrans` `quote` `pankou`
+
+**Agent 流程**：
+
+1. 先 `get_xueqiu_auth_status`；若 `authenticated: false` → 发登录引导并 **暂停**。
+2. 用户配置后 → `get_news_and_reports --source xueqiu` 或 `get_xueqiu_data`。
 
 分析个股或板块时，**务必**拉快讯并用 keyword 过滤相关行业词。
 

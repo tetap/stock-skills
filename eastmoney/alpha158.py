@@ -216,7 +216,7 @@ def score_alpha158_heuristic(factors: dict[str, float]) -> dict[str, Any]:
     std20 = (factors.get("STD20") or 0) * -500
 
     raw = roc20 * 0.35 + ma_bias * 0.25 + cntp20 * 0.15 + sumd20 * 0.15 + corr20 * 0.1 + std20 * 0.05
-    score = round(clamp(raw, -100, 100), 2)
+    score = round(100 * math.tanh(raw / 35), 2)
 
     if score >= 20:
         verdict = "因子偏多"
@@ -241,6 +241,16 @@ def score_alpha158_heuristic(factors: dict[str, float]) -> dict[str, Any]:
     }
 
 
+def score_alpha158(factors: dict[str, float]) -> dict[str, Any]:
+    """优先 LightGBM 权重，否则启发式。"""
+    from eastmoney.ml_models import try_lgb158_score
+
+    lgb = try_lgb158_score(factors)
+    if lgb:
+        return lgb
+    return score_alpha158_heuristic(factors)
+
+
 def build_alpha158_from_bars(
     bars: list[dict[str, Any]],
     *,
@@ -250,10 +260,11 @@ def build_alpha158_from_bars(
     factors = compute_alpha158_from_frame(df)
     result: dict[str, Any] = {
         "factor_count": len(factors),
+        "factor_count_note": "Qlib Alpha158 对齐 158 项 + RANK 窗口共 159 个字段",
         "latest_date": str(bars[-1]["date"]),
         "usage": "表格因子 → LightGBM/Linear/TabNet；勿 reshape 为时序张量",
         "summary": _factor_summary(factors),
-        "inference": score_alpha158_heuristic(factors),
+        "inference": score_alpha158(factors),
         "_note": "Alpha158 为 158 维截面特征，与 Alpha360 的 6×60 时序输入互补",
     }
     if include_all_factors:

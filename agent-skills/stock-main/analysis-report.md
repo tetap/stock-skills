@@ -1,6 +1,6 @@
 # A 股分析报告模板（专业 · 有立场）
 
-面向 **A 股市场**的综合分析。**不使用**格雷厄姆/巴菲特等顾问角色模块。先**尽量拉全数据**，再输出**有明确立场、可执行**的研究结论。
+面向 **A 股市场**的综合分析。流程：**拉数 → 多重审核**（[review-protocol.md](review-protocol.md)）→ **终稿 + §7 审核纪要**。
 
 ---
 
@@ -27,7 +27,7 @@
 | **明确回避** | 不建议新建仓，持有者应减仓 | 估值极端+趋势破+资金流出 |
 | **事件驱动博弈** | 仅适合短线，中线逻辑不成立 | 纯题材、亏损高 PB |
 
-- **置信度**：§1 必须写 **置信度 X/10** 及 1 句「若判断错了，触发条件是…」。
+- **置信度**：§1 写 **终稿置信度 X/10**（初稿不得 >6）；须过 review-protocol 门禁。
 
 ---
 
@@ -72,6 +72,7 @@
 | `get_alpha360_score` | secid（序列形态 + 启发式/TCN 打分） |
 | `get_alpha158_factors` | secid（158 维表格因子 highlights） |
 | `get_alpha158_score` | secid（表格因子综合分） |
+| `get_quant_technical` | secid（158+360+quant_verdict，**技术面推荐一次拉齐**） |
 
 ### 资金与筹码
 
@@ -89,10 +90,14 @@
 | `get_news_and_reports` | code, news, limit 10, **source=all**, stock_name |
 | `get_news_and_reports` | code, announcement, limit 5 |
 | `get_market_news` | flash, limit 20, **source=all** |
-| `get_market_news` | xueqiu_hot, limit 10, source=xueqiu |
+| `get_market_news` | xueqiu_livenews 或 flash+source=xueqiu（热门资讯需 Cookie） |
 | `get_market_news` | flash, keyword=行业词, limit 10 |
 | `get_sector_detail` | 从 profile 行业名, members 或 fund_flow |
 | `get_dragon_tiger` | code, limit 5（有则写，无则跳过） |
+
+**§3 技术面** 优先调用 `get_quant_technical`；若 5 日序列分与 60 日相反，必须写 **quant_verdict.summary**（如「短线改善·中线仍弱」），禁止只写一个合成数。
+
+> **策略 vs 研究**：`quant_verdict` 是实时因子解读，**不等于**通过样本外回测的策略信号。若 `model_status` 显示无 LGB 权重或 OOS IC≤0，§3 须标注「量化信号未过样本外检验，仅辅助」。
 
 **§5 事件与板块** 必须写：个股新闻 2 条 + 市场热点/情绪 1~2 条 + **雪球讨论热度排名**（若有）。
 
@@ -147,8 +152,9 @@
 
 | MA5/20/60 | 现价 | 近 20 日区间 |
 | 趋势结构 | 多头/空头/震荡 | |
-| Alpha360 序列分 | inference.score / verdict | 时序 6×60 |
+| Alpha360 序列分 | score_5d / score_60d / score（合成） | 5 日 + 60 日，短长分歧须分开写 |
 | Alpha158 因子分 | inference.score / verdict | 表格 158 维 |
+| **quant_verdict** | get_quant_technical | **表格+序列综合**，分歧时写 summary |
 | 相对沪深300 | {来自 compare_performance} | 强/弱 |
 | 关键信号 | 指标解读 1~2 条 | |
 
@@ -174,8 +180,29 @@
 1. …
 2. …
 
+## 7. 审核纪要（必输出）
+
+> 终稿置信度：**{X}/10**（初稿 {Y}/10）
+
+| 轮次 | 关键质疑/测试 | 结论 | 对评级/置信度影响 |
+|------|---------------|------|-------------------|
+| R2 数据审计 | … | … | … |
+| R3 魔鬼质疑 | … | … | … |
+| R4 一致性 | … | … | … |
+| R5 压力测试 | … | … | … |
+
+**仍存不确定性**：…
+
 > 仅供参考，不构成投资建议。
 ```
+
+---
+
+## 内部轮次（给用户前必做，详见 [review-protocol.md](review-protocol.md)）
+
+R1 初稿 → R2 审计 → R3 ≥5 个魔鬼问题 → R4 一致性矩阵 → R5 三场景压力测试 → R6 门禁
+
+**禁止**跳过上述轮次直接输出 §1~§6。
 
 ---
 
@@ -187,12 +214,11 @@
 
 ---
 
-## 质量自检（输出前必过）
+## 质量自检（R6 门禁前）
 
-- [ ] §1 是否有评级 + 置信度 + 具体价位（非「附近」「关注」）
-- [ ] 四维度交叉表是否每格都有数字
-- [ ] 是否写了相对沪深300/板块强弱
-- [ ] 是否写了催化剂日历
-- [ ] 是否写了「若我错了」
-- [ ] 是否写了空头论点
-- [ ] 工具调用是否 ≥18 次
+- [ ] 已执行 review-protocol R2~R5（非一遍过稿）
+- [ ] §7 审核纪要已写，含至少 4 行轮次记录
+- [ ] 终稿置信度 ≥7（若 5~6 则评级未超「右侧等待」）
+- [ ] §1 四维度 + quant_verdict + 交易计划 + 「若我错了」
+- [ ] 工具调用 ≥20 次
+- [ ] 158/360 短长分歧已解释

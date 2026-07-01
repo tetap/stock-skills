@@ -1,18 +1,25 @@
-"""雪球：讨论热度、热度榜（公开 screener API）。"""
+"""雪球：讨论热度、帖子、研报等（热榜无需登录；帖子/研报需 Cookie）。"""
 
 from __future__ import annotations
 
-import os
 import time
 from typing import Any
 
 from eastmoney.client import EastMoneyClient
 from eastmoney.config import HEADERS
+from eastmoney.xueqiu_auth import (
+    XUEQIU_LOGIN_URL,
+    XUEQIU_COOKIE_NAME,
+    XUEQIU_TOKEN_ENV,
+    XueqiuAuthRequired,
+    ensure_xueqiu_cookie,
+    resolve_xueqiu_cookie,
+)
 
 XUEQIU_SCREENER_URL = "https://xueqiu.com/service/v5/stock/screener/screen"
-XUEQIU_HOME_URL = "https://xueqiu.com"
-XUEQIU_COOKIE_NAME = "xq_a_token"
-XUEQIU_TOKEN_ENV = "XUEQIU_TOKEN"
+XUEQIU_LIVENEWS_URL = "https://xueqiu.com/statuses/livenews/list.json"
+# category=6：雪球热门资讯（hq 页「热门」流）
+XUEQIU_LIVENEWS_HOT_CATEGORY = 6
 
 RANK_FIELDS = {
     "tweet": {"hot": "tweet", "week": "tweet7d"},
@@ -29,61 +36,271 @@ def code_to_xq_symbol(code: str) -> str:
 
 
 def get_xueqiu_token() -> str:
-    """从环境变量读取 xq_a_token（值即浏览器 Cookie 中的 xq_a_token）。"""
-    return os.getenv(XUEQIU_TOKEN_ENV, "").strip()
+    """兼容旧接口：返回 xq_a_token 值（非整串 Cookie）。"""
+    cookie, _ = resolve_xueqiu_cookie(try_browser=False)
+    if not cookie:
+        return ""
+    for part in cookie.split(";"):
+        part = part.strip()
+        if part.startswith("xq_a_token="):
+            return part.split("=", 1)[1]
+    return ""
 
 
 def xueqiu_auth_guide(*, reason: str = "missing_token") -> dict[str, Any]:
-    """雪球帖子接口授权说明；Agent 可在 token 缺失/失效时展示并等待用户配置后继续。"""
+    """雪球授权说明；token 缺失/失效时展示并等待用户配置。"""
     reason_text = {
-        "missing_token": "未检测到 XUEQIU_TOKEN（浏览器 Cookie 中的 xq_a_token）。",
-        "auth_failed": "已配置 XUEQIU_TOKEN，但雪球返回未授权或凭证失效。",
+        "missing_token": f"未检测到雪球 Cookie（{XUEQIU_COOKIE_NAME}）。",
+        "auth_failed": f"已配置 {XUEQIU_TOKEN_ENV}，但雪球返回未授权或凭证失效。",
         "blocked": "雪球接口被 WAF 拦截，通常登录并更新 Cookie 后可恢复。",
-    }.get(reason, "雪球帖子接口需要有效登录凭证。")
+    }.get(reason, "雪球接口需要有效登录凭证。")
 
     return {
         "auth_required": True,
+        "interrupt": True,
         "reason": reason,
         "cookie_name": XUEQIU_COOKIE_NAME,
         "env_var": XUEQIU_TOKEN_ENV,
-        "login_url": XUEQIU_HOME_URL,
+        "env_var_full_cookie": "XUEQIUTOKEN",
+        "login_url": XUEQIU_LOGIN_URL,
         "message": reason_text,
+        "user_message": (
+            f"请先登录雪球：{XUEQIU_LOGIN_URL}\n"
+            f"登录后从浏览器 Cookie 复制 {XUEQIU_COOKIE_NAME}，"
+            f"执行 export {XUEQIU_TOKEN_ENV}='你的token' 后重试。"
+        ),
         "steps": [
-            f"在浏览器打开 {XUEQIU_HOME_URL}，使用手机号/微信等方式登录雪球（未完成登录请先授权）。",
-            "登录后按 F12 → Application（应用）→ Cookies → xueqiu.com，找到并复制 xq_a_token 的值。",
-            f"在本机终端执行：export {XUEQIU_TOKEN_ENV}='粘贴的token'（或写入 ~/.zshrc / ~/.bashrc 持久化）。",
-            "若使用 MCP：在 ~/.cursor/mcp.json 的 eastmoney-stock 环境变量中加入 XUEQIU_TOKEN，并重启 Cursor。",
-            "配置完成后回复「已配置雪球 token」，再重试 get_news_and_reports --source xueqiu 或 --source all。",
+            f"在浏览器打开 {XUEQIU_LOGIN_URL} 并完成登录（未登录无法获取 Cookie）。",
+            "F12 → Application → Cookies → xueqiu.com → 复制 xq_a_token。",
+            f"终端：export {XUEQIU_TOKEN_ENV}='粘贴值'（或整串 Cookie 写入 XUEQIUTOKEN）。",
+            "MCP 用户：写入 ~/.cursor/mcp.json 的 eastmoney-stock.env.XUEQIU_TOKEN，重启 Cursor。",
+            "也可安装 browser-cookie3 后自动从 Chrome/Safari 读取（须本机已登录雪球）。",
+            "配置完成后重试 get_news_and_reports --source xueqiu 或 get_xueqiu_data。",
         ],
-        "note": "讨论热榜/个股讨论热度无需 token；仅个股帖子正文需要 xq_a_token。",
+        "note": "讨论热榜无需 token；热门资讯(livenews)、帖子、研报、pysnowball 接口需要登录 Cookie。",
     }
 
 
 def xueqiu_auth_hint_row(*, reason: str = "missing_token") -> dict[str, Any]:
-    """格式化为资讯条目，便于与新闻合并返回。"""
     guide = xueqiu_auth_guide(reason=reason)
-    steps = "\n".join(f"{i + 1}. {s}" for i, s in enumerate(guide["steps"]))
     return {
         "time": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "title": "雪球帖子需登录：请从浏览器 Cookie 获取 xq_a_token",
-        "summary": f"{guide['message']}\n{steps}",
+        "title": f"请先登录雪球：{XUEQIU_LOGIN_URL}",
+        "summary": guide["user_message"],
         "provider": "xueqiu_auth_hint",
         "url": guide["login_url"],
         "auth_required": True,
+        "interrupt": True,
         "reason": reason,
     }
 
 
-def _xq_headers(referer: str = "https://xueqiu.com/hq") -> dict[str, str]:
-    token = get_xueqiu_token()
+def xueqiu_auth_status(*, try_browser: bool = True) -> dict[str, Any]:
+    cookie, source = resolve_xueqiu_cookie(try_browser=try_browser)
+    return {
+        "authenticated": bool(cookie),
+        "cookie_source": source,
+        "login_url": XUEQIU_LOGIN_URL,
+        "env_vars": [XUEQIU_TOKEN_ENV, "XUEQIUTOKEN"],
+        "pysnowball_available": _pysnowball_available(),
+    }
+
+
+def _pysnowball_available() -> bool:
+    try:
+        import pysnowball  # noqa: F401
+
+        return True
+    except ImportError:
+        return False
+
+
+def _xq_headers(referer: str = XUEQIU_LOGIN_URL) -> dict[str, str]:
+    cookie, _ = resolve_xueqiu_cookie(try_browser=True)
     headers = {
         **HEADERS,
         "Referer": referer,
         "X-Requested-With": "XMLHttpRequest",
+        "User-Agent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        ),
     }
-    if token:
-        headers["Cookie"] = f"xq_a_token={token};"
+    if cookie:
+        headers["Cookie"] = cookie
     return headers
+
+
+def _ts_ms_to_str(ts: Any) -> str | None:
+    if not ts:
+        return None
+    try:
+        val = float(ts)
+        if val > 1e12:
+            val /= 1000
+        return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(val))
+    except (TypeError, ValueError, OSError):
+        return None
+
+
+def _parse_xueqiu_error(data: dict[str, Any]) -> bool:
+    code = data.get("error_code")
+    if code in {400016, 400001, 401, "400016", "400001"}:
+        return True
+    return bool(data.get("error_description"))
+
+
+def _xq_session_get_json(
+    client: EastMoneyClient,
+    url: str,
+    params: dict[str, Any],
+    *,
+    referer: str = XUEQIU_LOGIN_URL,
+    require_auth: bool = False,
+    cache_key: str | None = None,
+    cache_ttl: float = 120,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """雪球 xueqiu.com 域 JSON（livenews / 帖子等，需 Cookie）。"""
+    cookie, _source = resolve_xueqiu_cookie(try_browser=True)
+    if not cookie:
+        if require_auth:
+            raise XueqiuAuthRequired(reason="missing_token")
+        return None, "missing_token"
+
+    if cache_key:
+        cached = client._cache.get(cache_key)
+        if cached is not None:
+            return cached, None
+
+    try:
+        client._throttle()
+        resp = client._session.get(
+            url,
+            params=params,
+            headers=_xq_headers(referer=referer),
+            timeout=15,
+        )
+        if resp.status_code != 200 or resp.text.lstrip().startswith("<"):
+            reason = "blocked" if resp.text.lstrip().startswith("<") else "auth_failed"
+            if require_auth:
+                raise XueqiuAuthRequired(reason=reason)
+            return None, reason
+        data = resp.json()
+    except XueqiuAuthRequired:
+        raise
+    except Exception:
+        if require_auth:
+            raise XueqiuAuthRequired(reason="auth_failed")
+        return None, "auth_failed"
+
+    if not isinstance(data, dict):
+        return None, "auth_failed"
+    if _parse_xueqiu_error(data):
+        if require_auth:
+            raise XueqiuAuthRequired(reason="auth_failed")
+        return None, "auth_failed"
+
+    if cache_key and cache_ttl > 0:
+        client._cache.set(cache_key, data, cache_ttl)
+    return data, None
+
+
+def _livenews_items(data: dict[str, Any]) -> list[dict[str, Any]]:
+    items = data.get("items")
+    if isinstance(items, list):
+        return items
+    nested = data.get("data")
+    if isinstance(nested, dict) and isinstance(nested.get("items"), list):
+        return nested["items"]
+    if isinstance(data.get("list"), list):
+        return data["list"]
+    return []
+
+
+def _livenews_item_url(item: dict[str, Any]) -> str:
+    target = item.get("target") or item.get("url")
+    if target:
+        s = str(target)
+        if s.startswith("http"):
+            return s
+        return f"https://xueqiu.com{s if s.startswith('/') else '/' + s}"
+    item_id = item.get("id")
+    if item_id:
+        return f"https://xueqiu.com/{item_id}"
+    return XUEQIU_LOGIN_URL
+
+
+def xueqiu_livenews(
+    client: EastMoneyClient,
+    *,
+    category: int = XUEQIU_LIVENEWS_HOT_CATEGORY,
+    since_id: int = -1,
+    limit: int = 15,
+    require_auth: bool = False,
+) -> tuple[list[dict[str, Any]], str | None]:
+    """雪球热门资讯（livenews/list.json，category=6 为 hq 热门流）。"""
+    params = {
+        "category": str(category),
+        "since_id": str(since_id),
+        "count": str(min(limit, 50)),
+    }
+    cache_key = f"xq_livenews:{category}:{since_id}:{limit}"
+    data, reason = _xq_session_get_json(
+        client,
+        XUEQIU_LIVENEWS_URL,
+        params,
+        referer=XUEQIU_LOGIN_URL,
+        require_auth=require_auth,
+        cache_key=cache_key,
+        cache_ttl=120,
+    )
+    if not data:
+        return [], reason
+
+    rows: list[dict[str, Any]] = []
+    for item in _livenews_items(data)[:limit]:
+        if not isinstance(item, dict):
+            continue
+        text = (item.get("text") or item.get("title") or item.get("description") or "").strip()
+        if not text:
+            continue
+        rows.append(
+            {
+                "id": item.get("id"),
+                "time": _ts_ms_to_str(item.get("created_at") or item.get("timeBefore")),
+                "title": text[:80] + ("…" if len(text) > 80 else ""),
+                "summary": text[:500],
+                "provider": "xueqiu_livenews",
+                "url": _livenews_item_url(item),
+                "category": category,
+            }
+        )
+    if not rows and require_auth:
+        raise XueqiuAuthRequired(reason="auth_failed")
+    return rows, None if rows else reason
+
+
+def xueqiu_livenews_as_news(
+    client: EastMoneyClient,
+    *,
+    category: int = XUEQIU_LIVENEWS_HOT_CATEGORY,
+    limit: int = 15,
+    require_auth: bool = False,
+) -> list[dict[str, Any]]:
+    """格式化热门资讯为 merge_news_rows 兼容条目。"""
+    rows, reason = xueqiu_livenews(
+        client,
+        category=category,
+        limit=limit,
+        require_auth=require_auth,
+    )
+    if rows:
+        return rows
+    if require_auth and reason:
+        raise XueqiuAuthRequired(reason=reason or "missing_token")
+    if reason:
+        return [xueqiu_auth_hint_row(reason=reason)]
+    return []
 
 
 def xueqiu_hot_stocks(
@@ -94,7 +311,7 @@ def xueqiu_hot_stocks(
     limit: int = 30,
     page: int = 1,
 ) -> list[dict[str, Any]]:
-    """雪球热度榜：讨论/关注/交易活跃。"""
+    """雪球热度榜（公开 screener，无需登录）。"""
     order_by = RANK_FIELDS.get(rank_by, RANK_FIELDS["tweet"]).get(period, "tweet")
     params = {
         "category": "CN",
@@ -137,7 +354,6 @@ def xueqiu_hot_as_news(
     period: str = "hot",
     limit: int = 15,
 ) -> list[dict[str, Any]]:
-    """将雪球热度榜格式化为资讯条目（用于市场情绪/热点）。"""
     hot = xueqiu_hot_stocks(client, rank_by=rank_by, period=period, limit=limit)
     label = {"tweet": "讨论", "follow": "关注", "deal": "交易"}.get(rank_by, rank_by)
     rows: list[dict[str, Any]] = []
@@ -163,7 +379,6 @@ def xueqiu_stock_heat(
     *,
     max_pages: int = 5,
 ) -> dict[str, Any] | None:
-    """查询个股在雪球讨论榜中的热度（分页扫描 screener）。"""
     symbol = code_to_xq_symbol(code)
     for page in range(1, max_pages + 1):
         batch = xueqiu_hot_stocks(
@@ -190,8 +405,10 @@ def xueqiu_stock_sentiment(
     name: str | None = None,
     limit: int = 5,
     include_auth_hint: bool = True,
+    require_auth: bool = False,
+    include_reports: bool = True,
 ) -> list[dict[str, Any]]:
-    """个股雪球情绪：热度摘要 + 可选帖子（需环境变量 XUEQIU_TOKEN）。"""
+    """个股雪球情绪：热度 + 帖子 + pysnowball 研报（后两者需 Cookie）。"""
     rows: list[dict[str, Any]] = []
     heat = xueqiu_stock_heat(client, code)
     if heat:
@@ -209,8 +426,30 @@ def xueqiu_stock_sentiment(
             }
         )
 
-    posts, auth_reason = xueqiu_stock_posts(client, code, limit=max(0, limit - len(rows)))
+    if include_reports and _pysnowball_available():
+        try:
+            from eastmoney.xueqiu_pysnowball import fetch_xueqiu_data
+
+            rep = fetch_xueqiu_data(
+                code,
+                "report",
+                limit=max(1, limit // 2),
+            )
+            rows.extend(rep.get("rows") or [])
+        except XueqiuAuthRequired:
+            if require_auth:
+                raise
+        except Exception:
+            pass
+
+    posts, auth_reason = xueqiu_stock_posts(
+        client,
+        code,
+        limit=max(0, limit - len(rows)),
+        require_auth=require_auth,
+    )
     rows.extend(posts)
+
     if include_auth_hint and auth_reason and len(rows) < limit:
         rows.append(xueqiu_auth_hint_row(reason=auth_reason))
     return rows[:limit]
@@ -221,36 +460,24 @@ def xueqiu_stock_posts(
     code: str,
     *,
     limit: int = 5,
+    require_auth: bool = False,
 ) -> tuple[list[dict[str, Any]], str | None]:
-    """个股雪球帖子。返回 (帖子列表, 授权失败原因)；原因见 xueqiu_auth_guide。"""
-    token = get_xueqiu_token()
-    if not token:
-        return [], "missing_token"
-
+    """个股帖子 timeline。require_auth=True 且无 Cookie 时抛出 XueqiuAuthRequired。"""
     symbol = code_to_xq_symbol(code)
     params = {
         "symbol": symbol,
         "count": str(min(limit, 20)),
         "source": "all",
     }
-    url = "https://xueqiu.com/statuses/stock_timeline.json"
-    try:
-        client._throttle()
-        resp = client._session.get(
-            url,
-            params=params,
-            headers=_xq_headers(referer=f"https://xueqiu.com/S/{symbol}"),
-            timeout=15,
-        )
-        if resp.status_code != 200 or resp.text.lstrip().startswith("<"):
-            reason = "blocked" if resp.text.lstrip().startswith("<") else "auth_failed"
-            return [], reason
-        data = resp.json()
-    except Exception:
-        return [], "auth_failed"
-
-    if data.get("error_code") in {400016, 400001, 401} or data.get("error_description"):
-        return [], "auth_failed"
+    data, reason = _xq_session_get_json(
+        client,
+        "https://xueqiu.com/statuses/stock_timeline.json",
+        params,
+        referer=f"https://xueqiu.com/S/{symbol}",
+        require_auth=require_auth,
+    )
+    if not data:
+        return [], reason
 
     items = data.get("list") or []
     rows: list[dict[str, Any]] = []
@@ -258,22 +485,18 @@ def xueqiu_stock_posts(
         text = (item.get("text") or item.get("description") or "").strip()
         if not text:
             continue
-        created = item.get("created_at")
-        time_str = (
-            time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(created / 1000))
-            if created
-            else None
-        )
         rows.append(
             {
-                "time": time_str,
+                "time": _ts_ms_to_str(item.get("created_at")),
                 "title": text[:80] + ("…" if len(text) > 80 else ""),
                 "summary": text[:500],
                 "provider": "xueqiu_post",
-                "url": f"https://xueqiu.com/{item.get('target') or item.get('id', '')}",
+                "url": _livenews_item_url(item),
             }
         )
-    return rows, None if rows else None
+    if not rows and require_auth:
+        raise XueqiuAuthRequired(reason="auth_failed")
+    return rows, None if rows else reason
 
 
 def _symbol_to_code(symbol: str | None) -> str | None:

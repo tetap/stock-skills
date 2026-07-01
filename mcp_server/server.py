@@ -216,7 +216,7 @@ def compare_performance(
 def get_market_news(
     news_type: Annotated[
         str,
-        Field(description="flash/headline/breakfast/sina_roll/sina_live/xueqiu_hot"),
+        Field(description="flash/headline/breakfast/sina_roll/sina_live/xueqiu_hot/xueqiu_livenews"),
     ] = "flash",
     keyword: Annotated[str, Field(description="标题/摘要关键词过滤，如 电池、半导体")] = "",
     limit: Annotated[int, Field(ge=1, le=50)] = 20,
@@ -327,8 +327,31 @@ def get_xueqiu_auth_guide(
         Field(description="missing_token=未配置, auth_failed=凭证失效, blocked=WAF拦截"),
     ] = "missing_token",
 ) -> str:
-    """【舆情】雪球 xq_a_token 获取与登录引导；帖子接口不可用时可先调用，再让用户配置后继续。"""
+    """【舆情】雪球登录引导；请先打开 https://xueqiu.com/hq 登录并配置 XUEQIU_TOKEN。"""
     return _dump(run_tool("get_xueqiu_auth_guide", reason=reason))
+
+
+@mcp.tool()
+def get_xueqiu_auth_status(
+    try_browser: Annotated[bool, Field(description="是否尝试从 Chrome/Safari 读取 Cookie")] = True,
+) -> str:
+    """【舆情】检测雪球 Cookie 是否可用（环境变量 / 浏览器）。"""
+    return _dump(run_tool("get_xueqiu_auth_status", try_browser=try_browser))
+
+
+@mcp.tool()
+def get_xueqiu_data(
+    code: Code,
+    data_type: Annotated[
+        str,
+        Field(
+            description="report|earningforecast|capital_flow|capital_history|margin|blocktrans|quote|pankou"
+        ),
+    ] = "report",
+    limit: Annotated[int, Field(ge=1, le=50)] = 10,
+) -> str:
+    """【舆情/数据】pysnowball 雪球接口：研报、盈利预测、资金流向、行情等（需登录 Cookie）。"""
+    return _dump(run_tool("get_xueqiu_data", code=code, data_type=data_type, limit=limit))
 
 
 @mcp.tool()
@@ -408,6 +431,23 @@ def get_alpha158_score(
             "get_alpha158_score",
             secid=secid,
             include_all_factors=include_all_factors,
+            period=period,
+            adjust=adjust,
+        )
+    )
+
+
+@mcp.tool()
+def get_quant_technical(
+    secid: Secid,
+    period: str = "daily",
+    adjust: str = "qfq",
+) -> str:
+    """【量化】Alpha158+Alpha360 一次拉齐，含 5/60 日序列分与 quant_verdict。"""
+    return _dump(
+        run_tool(
+            "get_quant_technical",
+            secid=secid,
             period=period,
             adjust=adjust,
         )

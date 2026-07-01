@@ -25,11 +25,14 @@ from eastmoney.historical import compare_performance, get_historical_series
 from eastmoney.kline import get_kline
 from eastmoney.news import get_market_news
 from eastmoney.quote import get_market_snapshot, get_realtime_quote
+from eastmoney.quant import get_quant_technical
 from eastmoney.sector import get_sector_detail, get_sector_overview, search_sectors
 from eastmoney.short_term import get_limit_up_history, get_short_term_monitor
 from eastmoney.signals import get_indicator_interpretation, get_limit_up_gene
 from eastmoney.symbols import resolve_symbol, search_stocks
-from eastmoney.xueqiu import xueqiu_auth_guide
+from eastmoney.xueqiu import xueqiu_auth_guide, xueqiu_auth_status
+from eastmoney.xueqiu_auth import XueqiuAuthRequired
+from eastmoney.xueqiu_pysnowball import SUPPORTED_TYPES, fetch_xueqiu_data
 
 _client: EastMoneyClient | None = None
 
@@ -193,6 +196,21 @@ def _run_primary(name: str, **kwargs: Any) -> Any:
         return get_limit_up_history(client, kwargs["code"], limit=int(kwargs.get("limit", 10)))
     if name == "get_xueqiu_auth_guide":
         return xueqiu_auth_guide(reason=kwargs.get("reason", "missing_token"))
+    if name == "get_xueqiu_auth_status":
+        try_browser = kwargs.get("try_browser", True)
+        if isinstance(try_browser, str):
+            try_browser = try_browser.lower() in {"1", "true", "yes"}
+        return xueqiu_auth_status(try_browser=bool(try_browser))
+    if name == "get_xueqiu_data":
+        tb = kwargs.get("try_browser", True)
+        if isinstance(tb, str):
+            tb = tb.lower() in {"1", "true", "yes"}
+        return fetch_xueqiu_data(
+            kwargs["code"],
+            kwargs.get("data_type", "report"),
+            limit=int(kwargs.get("limit", 10)),
+            try_browser=bool(tb),
+        )
     if name == "get_alpha360_tensor":
         include_tensor = kwargs.get("include_tensor", False)
         if isinstance(include_tensor, str):
@@ -239,6 +257,13 @@ def _run_primary(name: str, **kwargs: Any) -> Any:
             adjust=kwargs.get("adjust", "qfq"),
             include_all_factors=bool(include_all),
         )
+    if name == "get_quant_technical":
+        return get_quant_technical(
+            client,
+            kwargs["secid"],
+            period=kwargs.get("period", "daily"),
+            adjust=kwargs.get("adjust", "qfq"),
+        )
 
     raise ValueError(f"未知工具: {name}")
 
@@ -278,6 +303,8 @@ def run_tool(name: str, **kwargs: Any) -> Any:
             if fb is not None and not _is_empty_result(name, fb):
                 return fb
         return result
+    except XueqiuAuthRequired as auth_exc:
+        return auth_exc.to_dict()
     except Exception as primary_error:
         fb = _try_fallback(name, kwargs, primary_error)
         if fb is not None:
@@ -314,8 +341,11 @@ TOOL_NAMES = [
     "get_short_term_monitor",
     "get_limit_up_history",
     "get_xueqiu_auth_guide",
+    "get_xueqiu_auth_status",
+    "get_xueqiu_data",
     "get_alpha360_tensor",
     "get_alpha360_score",
     "get_alpha158_factors",
     "get_alpha158_score",
+    "get_quant_technical",
 ]
