@@ -9,6 +9,8 @@ description: >-
 
 **原则**：一个入口 `/stock`。先 **尽量拉全数据** → **多重审核**（见 [review-protocol.md](review-protocol.md)）→ 再输出 **带 §7 审核纪要** 的终稿。
 
+编排总览：[AGENTS.md](../../AGENTS.md)
+
 ## 报告风格（重要）
 
 - **专业**：每个判断锚定数据；四维度交叉；相对沪深300与板块强弱。

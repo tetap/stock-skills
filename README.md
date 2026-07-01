@@ -378,6 +378,8 @@ python scripts/em.py compare_performance --secid 1.600519 --benchmark-code 00030
 
 ## 项目结构
 
+Agent 路由与架构详见 [`AGENTS.md`](AGENTS.md)。
+
 ```
 .
 ├── agent-skills/          # 分析 workflow（13 个 SKILL，含 stock-main 主编排）

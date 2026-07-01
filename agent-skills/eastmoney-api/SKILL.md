@@ -37,6 +37,19 @@ source .venv/bin/activate
 python -m mcp_server
 ```
 
+## 命令路由（与 stock-main 配合）
+
+完整说明见仓库根目录 [AGENTS.md](../../AGENTS.md)。
+
+| 场景 | 入口 | 审核 |
+|------|------|------|
+| 个股全量 | `/stock 分析` + analysis-report | `get_review_protocol(flow=B)`，≥20 工具 |
+| 板块选股 | sector-report / `/stock-sector` 含推荐 | flow=C |
+| 市场热点 | `/stock-market` / market-brief | flow=D |
+| 单维（资金/筹码/K线/基本面/舆情） | `/stock-fund` 等 | **无** review-protocol |
+
+单维命令只拉相关工具；用户问「能不能买」→ 转 **`/stock 分析`**。
+
 ## Alpha360 / Alpha158 量化特征
 
 | 数据集 | 结构 | 典型模型 |
