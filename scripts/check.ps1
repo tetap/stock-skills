@@ -14,12 +14,12 @@ if (-not (Test-Path $Py)) {
 
 Write-Host "[check] 单元测试..."
 & $Py -m unittest discover -s tests -p "test_*.py" -v
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if (-not $?) { exit 1 }
 
 if (-not $SkipParity) {
     Write-Host "[check] MCP 工具 parity..."
     & $Py -m unittest tests.test_mcp_parity -v
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    if (-not $?) { exit 1 }
 }
 
 Write-Host "[check] 全部通过"

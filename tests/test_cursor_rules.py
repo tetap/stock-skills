@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 
@@ -33,7 +35,7 @@ GUIDE_DOCS = (
     ROOT / "docs" / "xueqiu-auth.md",
 )
 
-RELEASE_NOTES_SCRIPT = ROOT / "scripts" / "release_notes.sh"
+RELEASE_NOTES_SCRIPT = ROOT / "scripts" / "release_notes.py"
 
 
 class TestProjectGovernance(unittest.TestCase):
@@ -58,10 +60,9 @@ class TestProjectGovernance(unittest.TestCase):
 
     def test_release_notes_extracts_version(self) -> None:
         self.assertTrue(RELEASE_NOTES_SCRIPT.is_file())
-        import subprocess
 
         proc = subprocess.run(
-            ["bash", str(RELEASE_NOTES_SCRIPT), "v0.1.0"],
+            [sys.executable, str(RELEASE_NOTES_SCRIPT), "v0.1.0"],
             capture_output=True,
             text=True,
             check=False,

@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Extract release notes from CHANGELOG
-        run: bash scripts/release_notes.sh "${{ github.ref_name }}" > /tmp/release_body.md
+        run: python scripts/release_notes.py "${{ github.ref_name }}" > /tmp/release_body.md
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
