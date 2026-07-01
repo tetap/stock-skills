@@ -169,6 +169,15 @@ class TestMlModels(unittest.TestCase):
             self.assertFalse(st["oos_passed"])
             self.assertIn("右侧等待", st["report_cap"])
 
+    def test_bundled_demo_model_oos_not_passed(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        model = root / "models" / "alpha158_lgb.txt"
+        if not model.is_file():
+            self.skipTest("无演示权重")
+        st = load_lgb_oos_status(model_path=model)
+        self.assertTrue(st["available"])
+        self.assertFalse(st["oos_passed"])
+
 
 if __name__ == "__main__":
     unittest.main()

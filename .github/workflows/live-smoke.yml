@@ -21,7 +21,7 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/pip install -q --upgrade pip wheel
-          .venv/bin/pip install -q -r requirements.txt
+          .venv/bin/pip install -q -r requirements.lock
 
       - name: Live API smoke
         run: bash scripts/smoke_live.sh

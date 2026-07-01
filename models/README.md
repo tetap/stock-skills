@@ -14,25 +14,22 @@ pip install -r requirements-ml.txt
 python scripts/train_quant_models.py --lgb --secids 0.002074,1.600519,0.300204
 ```
 
-## 量化演示模型（可选）
+## 量化演示模型
 
-仓库默认 **不含** 预训练权重（`models/` 仅 `.gitkeep`），`get_quant_technical` 使用启发式打分。
-
-本地训练演示 LightGBM（约 1~3 分钟，需网络 + ML 依赖）：
-
-```bash
-bash scripts/train_demo_model.sh
-# 或：bash scripts/install.sh --with-ml && python scripts/train_quant_models.py --lgb --limit 250
-```
-
-产出：
+仓库包含 **演示用** LightGBM 权重（小样本训练，**OOS 未通过**，仅供联调 `oos_status` / `quant_verdict.oos_warning`）：
 
 | 文件 | 说明 |
 |------|------|
-| `models/alpha158_lgb.txt` | LightGBM 权重 |
-| `models/alpha158_lgb.metrics.json` | 80/20 OOS 指标；`get_quant_technical` 的 `oos_status` 会读取此文件 |
+| `alpha158_lgb.txt` | 演示 LGB 权重（勿用于实盘定调） |
+| `alpha158_lgb.metrics.json` | OOS IC≤0 时 `get_quant_technical` 会提示评级上限 |
 
-若 OOS IC≤0，分析报告须将 quant 标为「仅辅助」，评级上限「右侧等待」（见 `stock-quant-research`）。
+重新训练（需网络）：
+
+```bash
+bash scripts/train_demo_model.sh
+```
+
+正式研发见 `agent-skills/stock-quant-research/SKILL.md`（网格搜参 + OOS 验收）。
 
 ## 环境变量
 

@@ -50,7 +50,7 @@ def train_lgb(
     )
     from eastmoney.client import EastMoneyClient
 
-    client = EastMoneyClient()
+    client = EastMoneyClient(min_interval=1.0, max_retries=4)
     samples, feature_names = build_alpha158_samples(client, secids, forward_days=5, limit=limit)
     if len(samples) < 80:
         raise SystemExit(f"样本不足 ({len(samples)} 条)，请增加 --secids 或 --limit")

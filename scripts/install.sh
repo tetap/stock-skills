@@ -206,16 +206,22 @@ install_python_deps() {
   pip="$venv/bin/pip"
   pyexe="$venv/bin/python"
 
-  echo "[python] 安装依赖: $ROOT/requirements.txt"
+  echo "[python] 安装依赖（优先 requirements.lock）"
   "$pip" install -q --upgrade pip wheel
+
+  local req_file="$ROOT/requirements.txt"
+  if [[ -f "$ROOT/requirements.lock" ]]; then
+    req_file="$ROOT/requirements.lock"
+    echo "[python] 使用锁定版本: requirements.lock"
+  fi
 
   local req_hash_file="$venv/.requirements.sha256"
   local req_hash
-  req_hash="$(shasum -a 256 "$ROOT/requirements.txt" | awk '{print $1}')"
+  req_hash="$(shasum -a 256 "$req_file" | awk '{print $1}')"
   if [[ -f "$req_hash_file" && "$(cat "$req_hash_file")" == "$req_hash" ]]; then
-    echo "[python] requirements.txt 未变化，跳过 pip install"
+    echo "[python] 依赖文件未变化，跳过 pip install"
   else
-    "$pip" install -q -r "$ROOT/requirements.txt"
+    "$pip" install -q -r "$req_file"
     echo "$req_hash" > "$req_hash_file"
   fi
 

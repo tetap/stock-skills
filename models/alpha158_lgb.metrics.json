@@ -1,0 +1,32 @@
+{
+  "model": "/Users/zhengyicai/project/skills/models/alpha158_lgb.txt",
+  "train_ratio": 0.8,
+  "sample_count": 270,
+  "train_count": 216,
+  "test_count": 54,
+  "secids": [
+    "1.600519",
+    "0.000001"
+  ],
+  "best": {
+    "params": {
+      "learning_rate": 0.05,
+      "num_leaves": 31,
+      "num_boost_round": 80
+    },
+    "in_sample": {
+      "count": 216.0,
+      "ic": 0.9569,
+      "rmse": 0.010668,
+      "direction_accuracy": 0.9537
+    },
+    "out_of_sample": {
+      "count": 54.0,
+      "ic": -0.0294,
+      "rmse": 0.045247,
+      "direction_accuracy": 0.4259
+    }
+  },
+  "grid_searched": false,
+  "warning": "OOS IC>0 不代表可实盘；须独立回测 + 模拟盘拟合后再上实盘"
+}

@@ -345,6 +345,14 @@ bash scripts/install.sh --target all --scope project
 bash scripts/install.sh --target all --unlink
 ```
 
+**Windows（PowerShell）：**
+
+```powershell
+cd skills
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -Target cursor -Scope user
+# 量化: 加 -WithMl
+```
+
 ---
 
 ## CLI 参考（不依赖 AI 工具）
@@ -460,6 +468,8 @@ LIVE=1 bash scripts/smoke_live.sh
 ```
 
 GitHub Actions 在 push/PR 到 `master` 时自动运行 `test.sh`（见 `.github/workflows/test.yml`）。另有一个 **可选** 的定时真实接口冒烟 `live-smoke.yml`（`continue-on-error: true`，接口异常时不阻塞主 CI）。
+
+依赖锁定：`requirements.lock` 记录主包精确版本；`install.sh` 优先使用 lock 文件。更新 lock：`bash scripts/lock_deps.sh`。
 
 ---
 

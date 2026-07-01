@@ -15,11 +15,11 @@ if ! .venv/bin/python -c "import lightgbm" 2>/dev/null; then
   .venv/bin/pip install -q -r requirements-ml.txt
 fi
 
-echo "[demo] 训练演示 LGB（4 股 × 250 日 K 线，80/20 OOS）..."
+echo "[demo] 训练演示 LGB（2 股 × 200 日 K 线，80/20 OOS，慢速限流）..."
 .venv/bin/python scripts/train_quant_models.py \
   --lgb \
-  --secids "1.600519,0.000001,0.300204,0.002074" \
-  --limit 250 \
+  --secids "1.600519,0.000001" \
+  --limit 200 \
   --train-ratio 0.8
 
 echo "[demo] 完成。权重: models/alpha158_lgb.txt"

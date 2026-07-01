@@ -20,7 +20,7 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/pip install -q --upgrade pip wheel
-          .venv/bin/pip install -q -r requirements.txt
+          .venv/bin/pip install -q -r requirements.lock
 
       - name: Run tests
         run: bash scripts/test.sh
