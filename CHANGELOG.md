@@ -6,8 +6,11 @@
 
 ### 新增
 
+- **Alpha158 LGB 调优**：embargo 切分、L1/L2 正则、feature/bagging fraction、early stopping、`--grid` OOS IC 选优
+- **Alpha360 TCN 真实训练**：`--tcn` + OOS metrics（`alpha360_tcn.metrics.json`）
+- **GluonTS DeepAR**：`eastmoney/gluonts_adapter.py`（PandasDataset 长表）+ `--deepar` 训练
+- **`eastmoney/quant_training.py`**、**`eastmoney/tcn_model.py`** 统一训练/推理结构
 - **GitHub Pages 文档站**：`scripts/build_pages.py` + `.github/workflows/pages.yml` → https://tetap.github.io/stock-skills/
-- **`docs/xueqiu-auth.md`**：雪球 Cookie 授权 E2E 与 Agent 暂停流程
 - **`models/optional/`**：OOS 通过权重的 opt-in 目录说明
 - Windows CI：`test.yml` 增加 `windows-latest` + `check.ps1`
 - Live smoke：板块 `search_sectors`、C 流程 protocol、`xueqiu_hot`；`XUEQIU_TOKEN` 可选测 livenews

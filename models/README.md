@@ -1,18 +1,36 @@
-# Alpha158 LightGBM / Alpha360 TCN 权重目录
+# Alpha158 LightGBM / Alpha360 TCN / GluonTS DeepAR
 
-| 文件 | 用途 | 生成方式 |
-|------|------|----------|
-| `alpha158_lgb.txt` | Alpha158 表格因子 LightGBM Booster | `python scripts/train_quant_models.py --lgb` |
-| `alpha360_tcn.pt` | Alpha360 6×60 TCN 权重 | Qlib 训练后导出，或 `train_quant_models.py --tcn-init` |
+| 文件/目录 | 用途 | 生成方式 |
+|-----------|------|----------|
+| `alpha158_lgb.txt` | Alpha158 LightGBM（调优 + embargo + 早停） | `python scripts/train_quant_models.py --lgb` |
+| `alpha360_tcn.pt` | Alpha360 TCN 真实训练 | `python scripts/train_quant_models.py --tcn` |
+| `gluonts_deepar/` | GluonTS DeepAR（PandasDataset 长表） | `python scripts/train_quant_models.py --deepar` |
 
-未放置权重时，系统自动 **降级为启发式打分**（`get_quant_technical` 的 `model_status` 字段会标明）。
-
-## 快速训练（本地 K 线，非 Qlib 官方流程）
+## 训练命令
 
 ```bash
 pip install -r requirements-ml.txt
-python scripts/train_quant_models.py --lgb --secids 0.002074,1.600519,0.300204
+
+# Alpha158 LGB（默认调优超参 + 5 日 embargo 切分 + early stopping）
+python scripts/train_quant_models.py --lgb --grid --secids 1.600519,0.002594,0.300204
+
+# Alpha360 TCN（6×60 卷积，OOS metrics 写入 alpha360_tcn.metrics.json）
+python scripts/train_quant_models.py --tcn --epochs 40
+
+# GluonTS DeepAR（K 线 → 长表 item_id/timestamp/target，见 GluonTS 文档）
+python scripts/train_quant_models.py --deepar --deepar-epochs 15
 ```
+
+GluonTS 数据格式参考：[Pandas DataFrame dataset](https://ts.gluon.ai/stable/tutorials/data_manipulation/pandasdataframes.html)
+
+## Alpha158 LGB 调优要点
+
+| 项 | 说明 |
+|----|------|
+| 正则 | `lambda_l1/l2`、`min_data_in_leaf`、`feature/bagging fraction` |
+| 切分 | `temporal_split_with_embargo`（默认 5 日，与 forward label 对齐） |
+| 早停 | `early_stopping_rounds=30` on OOS |
+| 网格 | `--grid` 按 OOS IC 选优 |
 
 ## 量化演示模型
 
@@ -56,8 +74,9 @@ bash scripts/ensure_demo_models.sh
 
 ## 环境变量
 
-- `ALPHA158_MODEL_PATH` → 自定义 LightGBM 模型路径
-- `ALPHA360_MODEL_PATH` → 自定义 TCN 权重路径
+- `ALPHA158_MODEL_PATH` → LightGBM
+- `ALPHA360_MODEL_PATH` → TCN
+- `GLUONTS_MODEL_PATH` → DeepAR 目录（默认 `models/gluonts_deepar/`）
 
 ## Qlib 官方模型
 

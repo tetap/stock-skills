@@ -139,17 +139,44 @@ def load_lgb_oos_status(*, model_path: str | Path | None = None) -> dict[str, An
 
 def model_status() -> dict[str, Any]:
     """报告当前可用模型（供 get_quant_technical 附加）。"""
+    from eastmoney.gluonts_adapter import gluonts_status, load_gluonts_oos_status
+
     lgb_path = Path(os.getenv("ALPHA158_MODEL_PATH", DEFAULT_LGB_PATH))
     tcn_path = Path(os.getenv("ALPHA360_MODEL_PATH", DEFAULT_TCN_PATH))
     return {
         "alpha158_lightgbm": {
             "path": str(lgb_path),
             "available": lgb_path.is_file(),
+            "tuned_training": "embargo + early_stopping + L2/L1 正则",
         },
         "alpha360_tcn": {
             "path": str(tcn_path),
             "available": tcn_path.is_file(),
+            "train_hint": "python scripts/train_quant_models.py --tcn",
         },
+        "gluonts_deepar": gluonts_status(),
         "oos_status": load_lgb_oos_status(model_path=lgb_path),
+        "oos_status_tcn": _load_tcn_oos_status(tcn_path),
+        "oos_status_gluonts": load_gluonts_oos_status(),
         "train_hint": "python scripts/train_quant_models.py --help",
     }
+
+
+def _load_tcn_oos_status(tcn_path: Path) -> dict[str, Any]:
+    metrics_path = tcn_path.with_suffix(".metrics.json")
+    base = {"metrics_path": str(metrics_path), "model_path": str(tcn_path)}
+    if not metrics_path.is_file():
+        return {**base, "available": False, "oos_passed": None, "reason": "no_metrics_file"}
+    try:
+        data = json.loads(metrics_path.read_text(encoding="utf-8"))
+        oos = (data.get("best") or {}).get("out_of_sample") or {}
+        gate = evaluate_oos_metrics(oos)
+        return {
+            **base,
+            "available": True,
+            "oos_passed": gate["passed"],
+            "out_of_sample": oos,
+            "model_kind": data.get("model_kind", "alpha360_tcn"),
+        }
+    except (OSError, ValueError, TypeError):
+        return {**base, "available": False, "oos_passed": None, "reason": "metrics_read_error"}

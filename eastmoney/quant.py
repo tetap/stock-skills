@@ -149,11 +149,29 @@ def get_quant_technical(
     if oos.get("report_cap"):
         verdict = dict(verdict)
         verdict["oos_warning"] = oos["report_cap"]
+
+    gluonts_score = None
+    try:
+        from eastmoney.gluonts_adapter import try_gluonts_forecast_score
+
+        gluonts_score = try_gluonts_forecast_score(client, secid)
+    except Exception:
+        gluonts_score = None
+
+    if gluonts_score and gluonts_score.get("score") is not None:
+        verdict = dict(verdict)
+        verdict["gluonts_deepar"] = {
+            "score": gluonts_score["score"],
+            "verdict": gluonts_score.get("verdict"),
+            "implied_return": gluonts_score.get("implied_return"),
+        }
+
     return {
         "secid": secid,
         "latest_date": a158.get("latest_date") or a360.get("end_date"),
         "model_status": model_status(),
         "oos_status": oos,
+        "timeseries_forecast": gluonts_score,
         "alpha158": {
             "factor_count": a158.get("factor_count"),
             "factor_count_note": a158.get("factor_count_note"),

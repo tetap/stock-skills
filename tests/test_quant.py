@@ -128,6 +128,7 @@ class TestMlModels(unittest.TestCase):
         st = model_status()
         self.assertIn("alpha158_lightgbm", st)
         self.assertIn("alpha360_tcn", st)
+        self.assertIn("gluonts_deepar", st)
         self.assertIn("oos_status", st)
 
     def test_oos_status_no_model(self) -> None:

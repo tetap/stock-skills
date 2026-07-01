@@ -1,5 +1,7 @@
-# 可选 ML 依赖（Alpha360 TCN、Alpha158 LightGBM、npy 导出）
+# 可选 ML 依赖（Alpha360 TCN、Alpha158 LightGBM、GluonTS DeepAR）
 # pip install -r requirements-ml.txt
 torch>=2.0.0
 numpy>=1.24.0
+pandas>=2.0.0
 lightgbm>=4.0.0
+gluonts[torch]>=0.14.0

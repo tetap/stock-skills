@@ -158,23 +158,10 @@ def try_torch_tcn_score(
         return None
     try:
         import torch
-        import torch.nn as nn
     except ImportError:
         return None
 
-    class TCNScore(nn.Module):
-        def __init__(self) -> None:
-            super().__init__()
-            self.conv1 = nn.Conv1d(6, 32, kernel_size=3, padding=1)
-            self.conv2 = nn.Conv1d(32, 32, kernel_size=3, padding=1)
-            self.pool = nn.AdaptiveAvgPool1d(1)
-            self.fc = nn.Linear(32, 1)
-
-        def forward(self, x: torch.Tensor) -> torch.Tensor:
-            x = torch.relu(self.conv1(x))
-            x = torch.relu(self.conv2(x))
-            x = self.pool(x).squeeze(-1)
-            return self.fc(x).squeeze(-1)
+    from eastmoney.tcn_model import TCNScore
 
     model = TCNScore()
     state = torch.load(path, map_location="cpu", weights_only=True)
