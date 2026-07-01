@@ -30,7 +30,7 @@ python scripts/em.py get_market_news --news-type headline --limit 15 --source ea
 ## 个股新闻（必会）
 
 ```bash
-# 东财搜索 API + 新浪筛选 + 雪球讨论热度（可选帖子需 XUEQIU_TOKEN）
+# 东财搜索 API + 新浪筛选 + 雪球讨论热度/热门资讯（浏览器 Cookie 自动读取）
 python scripts/em.py get_news_and_reports --code 002074 --content-type news --limit 10 --source all --stock-name 国轩高科
 python scripts/em.py get_news_and_reports --code 002074 --content-type news --source xueqiu
 python scripts/em.py get_news_and_reports --code 002074 --content-type news --source eastmoney

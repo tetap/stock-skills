@@ -84,13 +84,14 @@ bash scripts/install.sh --target cursor --scope project # 仅本仓库
 |------|------|------|
 | 分析 Skills | `~/.cursor/skills/` | `.cursor/skills/` |
 | 快捷指令 | `~/.cursor/commands/` | `.cursor/commands/` |
-| MCP 配置 | — | `.cursor/mcp.json`（仓库已含） |
+| MCP 配置 | — | 运行 `install.sh` 生成本地 `.cursor/mcp.json`（见 `.cursor/mcp.json.example`） |
 
 ### 启用 MCP（推荐，模型可直接调全部数据工具）
 
-1. 打开 Cursor → **Settings → MCP**
-2. 确认 `eastmoney-stock` 已加载（读取本项目 `.cursor/mcp.json`）
-3. 若未出现，重启 Cursor 或 Reload MCP
+1. 先运行 `bash scripts/install.sh --target cursor`（生成 `.cursor/mcp.json` 并安装依赖）
+2. 打开 Cursor → **Settings → MCP**
+3. 确认 `eastmoney-stock` 已加载（**36 个工具**）
+4. 若未出现，重启 Cursor 或 Reload MCP
 
 验证 MCP 进程：
 

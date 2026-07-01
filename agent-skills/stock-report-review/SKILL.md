@@ -11,6 +11,8 @@ description: >-
 
 **完整协议**：[../stock-main/review-protocol.md](../stock-main/review-protocol.md)
 
+**结构化入口**：MCP/CLI 调用 `get_review_protocol(flow=B|C|D)` 获取轮次、门禁与 §7 模板要求。
+
 ---
 
 ## 快速流程（个股）

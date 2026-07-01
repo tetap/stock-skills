@@ -34,8 +34,10 @@ description: >-
 
 1. `resolve_symbol` → secid、code、name
 2. 拉数 ≥ **20 次**，见 [analysis-report.md](analysis-report.md)（含 `get_quant_technical`、新闻/情绪）
-3. 执行 [review-protocol.md](review-protocol.md) **R1~R6**（数据审计 → 魔鬼质疑 → 一致性 → 压力测试 → 门禁）
+3. 调用 `get_review_protocol(flow=B)` 获取轮次清单，执行 [review-protocol.md](review-protocol.md) **R1~R6**
 4. 输出 **7 节终稿**（§1~§6 报告 + **§7 审核纪要**）；§1 含评级、终稿置信度、交易计划
+
+`quant_verdict` / Alpha158/360 为**研究辅助**，不等于通过 OOS 回测的策略信号。
 
 子 Skill：**stock-report-review**（审核清单速查）
 
@@ -61,7 +63,7 @@ description: >-
 2. 拉 7×24 快讯、要闻、板块排行、大盘/个股资金
 3. 交叉提炼主线；过 [review-protocol.md](review-protocol.md) **D 流程三轮** + 审核纪要
 
-**雪球帖子**：若需讨论正文且出现 `xueqiu_auth_hint`，先引导用户登录雪球并从 Cookie 复制 `xq_a_token` 到 `XUEQIU_TOKEN`，用户确认后再继续。
+**雪球帖子/热门资讯**：先 `get_xueqiu_auth_status`；若 `authenticated: false` 或返回 `interrupt` → 提示用户在 Chrome/Safari 打开 https://xueqiu.com/hq 登录（自动读 Cookie，**无需**手动复制 token，除非 MCP 权限导致持续失败）。
 
 ---
 

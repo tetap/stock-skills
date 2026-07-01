@@ -327,7 +327,7 @@ def get_xueqiu_auth_guide(
         Field(description="missing_token=未配置, auth_failed=凭证失效, blocked=WAF拦截"),
     ] = "missing_token",
 ) -> str:
-    """【舆情】雪球登录引导；请先打开 https://xueqiu.com/hq 登录并配置 XUEQIU_TOKEN。"""
+    """【舆情】雪球登录引导；在 Chrome/Safari 打开 https://xueqiu.com/hq 登录即可（自动读 Cookie）。"""
     return _dump(run_tool("get_xueqiu_auth_guide", reason=reason))
 
 

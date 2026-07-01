@@ -17,7 +17,7 @@ description: >-
 
 1. `resolve_symbol` → secid、code、name
 2. **全量拉数**（见 **stock-main/analysis-report.md**），含 `get_market_news`
-3. 6 节报告
+3. `get_review_protocol(flow=B)` → 按 review-protocol 审核 → 6 节报告 + §7 审核纪要
 
 ### 板块 + 选股
 
