@@ -1,0 +1,227 @@
+"""东方财富 MCP Server。"""
+
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+from typing import Annotated, Any
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from mcp.server.fastmcp import FastMCP  # noqa: E402
+from pydantic import Field  # noqa: E402
+
+from eastmoney.mcp_meta import MCP_INSTRUCTIONS  # noqa: E402
+from eastmoney.tools import run_tool  # noqa: E402
+
+Secid = Annotated[str, Field(description="证券 ID，沪 1.xxx 深 0.xxx，如 1.600519")]
+Code = Annotated[str, Field(description="6 位 A 股代码，如 600519")]
+Query = Annotated[str, Field(description="股票名称或代码，如 贵州茅台 / 600519")]
+
+mcp = FastMCP("eastmoney-stock", instructions=MCP_INSTRUCTIONS)
+
+
+def _dump(result: Any) -> str:
+    return json.dumps(result, ensure_ascii=False, indent=2, default=str)
+
+
+@mcp.tool()
+def resolve_symbol(query: Query) -> str:
+    """【基础】解析股票名称或代码，返回 secid、code、name。任何分析的第一步。"""
+    return _dump(run_tool("resolve_symbol", query=query))
+
+
+@mcp.tool()
+def search_stocks(
+    query: Query,
+    limit: Annotated[int, Field(description="返回条数", ge=1, le=50)] = 10,
+) -> str:
+    """【基础】模糊搜索 A 股列表。"""
+    return _dump(run_tool("search_stocks", query=query, limit=limit))
+
+
+@mcp.tool()
+def get_realtime_quote(secid: Secid) -> str:
+    """【行情】个股实时价、涨跌幅、量额、PE、市值。"""
+    return _dump(run_tool("get_realtime_quote", secid=secid))
+
+
+@mcp.tool()
+def get_kline(
+    secid: Secid,
+    period: Annotated[str, Field(description="daily/weekly/monthly/60min 等")] = "daily",
+    adjust: Annotated[str, Field(description="none/qfq/hfq")] = "qfq",
+    limit: Annotated[int, Field(ge=1, le=500)] = 120,
+) -> str:
+    """【行情】K 线历史数据，用于技术面与历史分析。"""
+    return _dump(run_tool("get_kline", secid=secid, period=period, adjust=adjust, limit=limit))
+
+
+@mcp.tool()
+def get_market_snapshot(
+    sort: Annotated[str, Field(description="change_pct/turnover/volume")] = "change_pct",
+    limit: Annotated[int, Field(ge=1, le=100)] = 20,
+) -> str:
+    """【行情】A 股涨跌榜快照，筛选强势股。"""
+    return _dump(run_tool("get_market_snapshot", sort=sort, limit=limit))
+
+
+@mcp.tool()
+def get_company_profile(secid: Secid, code: Code) -> str:
+    """【基本面】公司简介、行业、主营业务、上市日期。"""
+    return _dump(run_tool("get_company_profile", secid=secid, code=code))
+
+
+@mcp.tool()
+def get_financial_statements(
+    code: Code,
+    report_type: Annotated[str, Field(description="income/balance/cashflow")] = "income",
+    limit: Annotated[int, Field(ge=1, le=20)] = 8,
+) -> str:
+    """【基本面】利润表/资产负债表/现金流量表。"""
+    return _dump(run_tool("get_financial_statements", code=code, report_type=report_type, limit=limit))
+
+
+@mcp.tool()
+def get_valuation_metrics(secid: Secid) -> str:
+    """【基本面】PE/PB/总市值/流通市值/换手率。"""
+    return _dump(run_tool("get_valuation_metrics", secid=secid))
+
+
+@mcp.tool()
+def get_shareholders(
+    code: Code,
+    limit: Annotated[int, Field(ge=1, le=30)] = 10,
+) -> str:
+    """【事件】十大股东及变动。"""
+    return _dump(run_tool("get_shareholders", code=code, limit=limit))
+
+
+@mcp.tool()
+def get_dragon_tiger(
+    code: Code,
+    limit: Annotated[int, Field(ge=1, le=30)] = 10,
+) -> str:
+    """【事件】龙虎榜历史记录。"""
+    return _dump(run_tool("get_dragon_tiger", code=code, limit=limit))
+
+
+@mcp.tool()
+def get_news_and_reports(
+    code: Code,
+    content_type: Annotated[str, Field(description="news/announcement/report")] = "news",
+    limit: Annotated[int, Field(ge=1, le=30)] = 10,
+) -> str:
+    """【事件】新闻、公告、研报。"""
+    return _dump(
+        run_tool("get_news_and_reports", code=code, content_type=content_type, limit=limit)
+    )
+
+
+@mcp.tool()
+def get_stock_fund_flow(
+    secid: Secid,
+    limit: Annotated[int, Field(ge=1, le=60)] = 20,
+) -> str:
+    """【资金面】个股主力/超大单/大单净流入时序。"""
+    return _dump(run_tool("get_stock_fund_flow", secid=secid, limit=limit))
+
+
+@mcp.tool()
+def get_fund_flow_rank(limit: Annotated[int, Field(ge=1, le=100)] = 20) -> str:
+    """【资金面】全市场主力资金流排名 Top N。"""
+    return _dump(run_tool("get_fund_flow_rank", limit=limit))
+
+
+@mcp.tool()
+def get_market_fund_flow(limit: Annotated[int, Field(ge=1, le=60)] = 20) -> str:
+    """【资金面】大盘整体主力资金流向背景。"""
+    return _dump(run_tool("get_market_fund_flow", limit=limit))
+
+
+@mcp.tool()
+def get_chip_distribution(
+    secid: Secid,
+    limit: Annotated[int, Field(ge=1, le=120)] = 60,
+) -> str:
+    """【筹码】获利比例、平均成本、90/70 成本区间与集中度。"""
+    return _dump(run_tool("get_chip_distribution", secid=secid, limit=limit))
+
+
+@mcp.tool()
+def get_historical_series(
+    secid: Secid,
+    period: str = "daily",
+    adjust: str = "qfq",
+    limit: Annotated[int, Field(ge=30, le=500)] = 250,
+    indicators: Annotated[str, Field(description="逗号分隔，如 ma")] = "",
+) -> str:
+    """【历史】K 线序列 + 涨跌幅/回撤/波动率；可选 MA 指标。"""
+    return _dump(
+        run_tool(
+            "get_historical_series",
+            secid=secid,
+            period=period,
+            adjust=adjust,
+            limit=limit,
+            indicators=indicators or None,
+        )
+    )
+
+
+@mcp.tool()
+def compare_performance(
+    secid: Secid,
+    benchmark_code: Annotated[str, Field(description="基准指数代码，默认沪深300")] = "000300",
+    limit: Annotated[int, Field(ge=30, le=500)] = 250,
+) -> str:
+    """【历史】个股 vs 基准指数的相对收益、回撤、波动。"""
+    return _dump(
+        run_tool("compare_performance", secid=secid, benchmark_code=benchmark_code, limit=limit)
+    )
+
+
+@mcp.tool()
+def get_sector_overview(
+    sector_type: Annotated[str, Field(description="industry/concept")] = "industry",
+    sort: str = "change_pct",
+    limit: Annotated[int, Field(ge=1, le=100)] = 30,
+) -> str:
+    """【板块】行业/概念板块涨跌排行。"""
+    return _dump(
+        run_tool("get_sector_overview", sector_type=sector_type, sort=sort, limit=limit)
+    )
+
+
+@mcp.tool()
+def get_sector_detail(
+    board_name: Annotated[str, Field(description="板块名称，如 半导体、银行")] = "",
+    board_code: Annotated[str, Field(description="板块代码，如 BK0475")] = "",
+    sector_type: Annotated[str, Field(description="industry/concept")] = "industry",
+    detail_type: Annotated[str, Field(description="members/kline/fund_flow")] = "members",
+    limit: Annotated[int, Field(ge=1, le=200)] = 50,
+) -> str:
+    """【板块】成分股、板块 K 线、或板块内个股资金流排名。"""
+    kwargs: dict[str, Any] = {
+        "sector_type": sector_type,
+        "detail_type": detail_type,
+        "limit": limit,
+    }
+    if board_name:
+        kwargs["board_name"] = board_name
+    if board_code:
+        kwargs["board_code"] = board_code
+    if not board_name and not board_code:
+        raise ValueError("board_name 或 board_code 至少提供一个")
+    return _dump(run_tool("get_sector_detail", **kwargs))
+
+
+def main() -> None:
+    mcp.run(transport="stdio")
+
+
+if __name__ == "__main__":
+    main()

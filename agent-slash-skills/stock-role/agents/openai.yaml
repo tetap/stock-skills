@@ -1,0 +1,4 @@
+interface:
+  display_name: "投资顾问角色"
+policy:
+  allow_implicit_invocation: false

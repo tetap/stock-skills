@@ -1,0 +1,4 @@
+interface:
+  display_name: "全面分析"
+policy:
+  allow_implicit_invocation: false

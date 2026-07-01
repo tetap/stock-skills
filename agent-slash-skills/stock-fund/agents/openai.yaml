@@ -1,0 +1,4 @@
+interface:
+  display_name: "资金面"
+policy:
+  allow_implicit_invocation: false

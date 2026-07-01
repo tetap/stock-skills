@@ -1,0 +1,4 @@
+interface:
+  display_name: "筹码分析"
+policy:
+  allow_implicit_invocation: false

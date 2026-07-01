@@ -1,0 +1,4 @@
+interface:
+  display_name: "K线技术面"
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "eastmoney-stock": {
+      "command": "/Users/zhengyicai/project/skills/.venv/bin/python",
+      "args": ["-m", "mcp_server"],
+      "cwd": "/Users/zhengyicai/project/skills"
+    }
+  }
+}

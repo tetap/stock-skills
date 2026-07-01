@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# install.sh 生成的符号链接（运行 scripts/install.sh 本地安装）
+.cursor/skills/
+.cursor/commands/
+.claude/skills/
+.codex/skills/
+.agents/skills/
