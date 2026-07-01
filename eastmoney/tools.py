@@ -7,7 +7,13 @@ from typing import Any
 
 from eastmoney.chip import get_chip_distribution
 from eastmoney.client import EastMoneyClient
-from eastmoney.events import get_dragon_tiger, get_news_and_reports, get_shareholders
+from eastmoney.events import (
+    get_dragon_tiger,
+    get_major_events,
+    get_news_and_reports,
+    get_shareholder_count,
+    get_shareholders,
+)
 from eastmoney.fallback import available as akshare_available
 from eastmoney.fallback import run_fallback
 from eastmoney.financial import get_company_profile, get_financial_statements, get_valuation_metrics
@@ -16,6 +22,8 @@ from eastmoney.historical import compare_performance, get_historical_series
 from eastmoney.kline import get_kline
 from eastmoney.quote import get_market_snapshot, get_realtime_quote
 from eastmoney.sector import get_sector_detail, get_sector_overview
+from eastmoney.short_term import get_limit_up_history, get_short_term_monitor
+from eastmoney.signals import get_indicator_interpretation, get_limit_up_gene
 from eastmoney.symbols import resolve_symbol, search_stocks
 
 _client: EastMoneyClient | None = None
@@ -77,6 +85,10 @@ def _run_primary(name: str, **kwargs: Any) -> Any:
         return get_valuation_metrics(client, kwargs["secid"])
     if name == "get_shareholders":
         return get_shareholders(client, kwargs["code"], limit=int(kwargs.get("limit", 10)))
+    if name == "get_shareholder_count":
+        return get_shareholder_count(client, kwargs["code"], limit=int(kwargs.get("limit", 8)))
+    if name == "get_major_events":
+        return get_major_events(client, kwargs["code"], limit=int(kwargs.get("limit", 20)))
     if name == "get_dragon_tiger":
         return get_dragon_tiger(client, kwargs["code"], limit=int(kwargs.get("limit", 10)))
     if name == "get_news_and_reports":
@@ -129,6 +141,24 @@ def _run_primary(name: str, **kwargs: Any) -> Any:
             detail_type=kwargs.get("detail_type", "members"),
             limit=int(kwargs.get("limit", 50)),
         )
+    if name == "get_indicator_interpretation":
+        return get_indicator_interpretation(
+            client,
+            kwargs["secid"],
+            code=kwargs.get("code"),
+            limit=int(kwargs.get("limit", 250)),
+        )
+    if name == "get_limit_up_gene":
+        return get_limit_up_gene(
+            client,
+            kwargs["secid"],
+            code=kwargs.get("code"),
+            limit=int(kwargs.get("limit", 250)),
+        )
+    if name == "get_short_term_monitor":
+        return get_short_term_monitor(client, kwargs["code"])
+    if name == "get_limit_up_history":
+        return get_limit_up_history(client, kwargs["code"], limit=int(kwargs.get("limit", 10)))
 
     raise ValueError(f"未知工具: {name}")
 
@@ -158,6 +188,8 @@ TOOL_NAMES = [
     "get_financial_statements",
     "get_valuation_metrics",
     "get_shareholders",
+    "get_shareholder_count",
+    "get_major_events",
     "get_dragon_tiger",
     "get_news_and_reports",
     "get_stock_fund_flow",
@@ -168,4 +200,8 @@ TOOL_NAMES = [
     "compare_performance",
     "get_sector_overview",
     "get_sector_detail",
+    "get_indicator_interpretation",
+    "get_limit_up_gene",
+    "get_short_term_monitor",
+    "get_limit_up_history",
 ]

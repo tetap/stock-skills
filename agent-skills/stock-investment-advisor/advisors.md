@@ -43,9 +43,12 @@
 | buffett | 同上 + `get_company_profile`, 3～5 年利润表 | `get_news_and_reports` |
 | fisher | `get_financial_statements`(income), `get_company_profile` | `get_shareholders`, 行业对比 |
 | lynch | `get_valuation_metrics`, `get_financial_statements`(income), `get_sector_detail` | PEG 手算 |
-| soros | `get_kline`, `get_stock_fund_flow`, `get_market_fund_flow`, `get_news_and_reports` | 板块宏观 |
-| dalio | `get_market_fund_flow`, `compare_performance`, 板块/指数背景 | 宏观新闻 |
-| composite | orchestrator 全套（见 stock-analysis-orchestrator） | — |
+| soros | `get_indicator_interpretation`, `get_limit_up_gene`, `get_stock_fund_flow`, `get_major_events` | `get_kline`, 板块宏观 |
+| dalio | `get_market_fund_flow`, `compare_performance`, `get_major_events` | 宏观新闻 |
+| composite | 基本面+资金+事件+**均线(MA)+短线官方monitor** | 见 action-guide.md |
+
+**所有分析类请求额外必拉**（见 [action-guide.md](action-guide.md)）：
+`get_historical_series --indicators ma` · `get_kline --limit 20`
 
 CLI 示例：
 
@@ -152,32 +155,21 @@ python scripts/em.py compare_performance --secid 1.600519 --benchmark-code 00030
 ### `composite` 综合顾问
 
 **流程**：
-1. 分别用 graham / buffett / lynch 视角做**简短**交叉点评（各 3～5 bullet）
-2. 标注**共识**与**分歧**
-3. 给出「观察清单」而非单一买卖指令
+1. 分别用 graham / buffett / lynch / soros 视角交叉点评
+2. 标注共识与分歧
+3. **必须输出「近期操作建议」表**（见 action-guide.md），取多流派交集作为操作倾向
 
 ---
 
-## 报告模板（按顾问）
+## 报告模板
 
-### 通用头
+**一律使用 [action-guide.md](action-guide.md) 增强模板**，含：
+- 一句话结论 + **操作倾向**
+- **近期操作建议**（看线周期、介入区间、确认/回避、观察期）
+- 技术面快照（MA5/20/60）
+- 基本面/事件/风险/流派分歧
 
-```markdown
-# {名称} · {顾问名称}视角分析
-
-> 顾问流派：{id} — {一句话哲学}
-> 数据截止：{quote 时间或说明}
-> **本报告为风格化研究，不构成投资建议。**
-```
-
-### 必含章节
-
-1. **顾问结论摘要**（3 行以内）
-2. **关键数据**（表格，仅该流派关心的指标）
-3. **符合流派的理由**
-4. **违背流派的红旗 / 风险**
-5. **顾问会追问的问题**（若数据不足）
-6. **与其他流派的潜在分歧**（composite 必填，其他可选）
+旧版简模板已废弃，禁止只写 3 行摘要了事。
 
 ### 禁止
 

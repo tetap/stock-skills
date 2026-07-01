@@ -73,12 +73,24 @@ link_dir_entries() {
   local require_skill="${3:-false}"
   local label="$4"
   local entry name src_abs
+  # 已废弃，不再安装到用户目录
+  local skip_names=(
+    stock-investment-advisor
+    stock-role
+  )
 
   mkdir -p "$dest"
 
   for entry in "$src_dir"/*; do
     [[ -e "$entry" ]] || continue
     name="$(basename "$entry")"
+    local base="$name"
+    [[ "$base" == *.md ]] && base="${base%.md}"
+    for skip in "${skip_names[@]}"; do
+      if [[ "$name" == "$skip" || "$base" == "$skip" ]]; then
+        continue 2
+      fi
+    done
     if [[ "$require_skill" == "true" && ! -f "$entry/SKILL.md" ]]; then
       continue
     fi

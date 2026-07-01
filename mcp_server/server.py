@@ -101,6 +101,24 @@ def get_shareholders(
 
 
 @mcp.tool()
+def get_shareholder_count(
+    code: Code,
+    limit: Annotated[int, Field(ge=1, le=20)] = 8,
+) -> str:
+    """【事件】股东户数趋势：户数、环比变化、户均持股、筹码集中度。"""
+    return _dump(run_tool("get_shareholder_count", code=code, limit=limit))
+
+
+@mcp.tool()
+def get_major_events(
+    code: Code,
+    limit: Annotated[int, Field(ge=1, le=50)] = 20,
+) -> str:
+    """【事件】大事提醒时间线：报表披露、融资融券、资本运作、分红、股东户数等。"""
+    return _dump(run_tool("get_major_events", code=code, limit=limit))
+
+
+@mcp.tool()
 def get_dragon_tiger(
     code: Code,
     limit: Annotated[int, Field(ge=1, le=30)] = 10,
@@ -217,6 +235,47 @@ def get_sector_detail(
     if not board_name and not board_code:
         raise ValueError("board_name 或 board_code 至少提供一个")
     return _dump(run_tool("get_sector_detail", **kwargs))
+
+
+@mcp.tool()
+def get_indicator_interpretation(
+    secid: Secid,
+    code: Code = "",
+    limit: Annotated[int, Field(ge=60, le=500)] = 250,
+) -> str:
+    """【短线】指标解读：KDJ/RSI/MACD/BIAS 信号近一年回测概率与最新触发。"""
+    kwargs: dict[str, Any] = {"secid": secid, "limit": limit}
+    if code:
+        kwargs["code"] = code
+    return _dump(run_tool("get_indicator_interpretation", **kwargs))
+
+
+@mcp.tool()
+def get_limit_up_gene(
+    secid: Secid,
+    code: Code = "",
+    limit: Annotated[int, Field(ge=60, le=500)] = 250,
+) -> str:
+    """【短线】涨停基因：近一年涨跌停天数、首板封板率、次日红盘率等。"""
+    kwargs: dict[str, Any] = {"secid": secid, "limit": limit}
+    if code:
+        kwargs["code"] = code
+    return _dump(run_tool("get_limit_up_gene", **kwargs))
+
+
+@mcp.tool()
+def get_short_term_monitor(code: Code) -> str:
+    """【短线】官方涨停基因/短线盯盘（RPT_INTSELECTION_MONITOR，与 App 同源）。"""
+    return _dump(run_tool("get_short_term_monitor", code=code))
+
+
+@mcp.tool()
+def get_limit_up_history(
+    code: Code,
+    limit: Annotated[int, Field(ge=1, le=30)] = 10,
+) -> str:
+    """【短线】涨跌停历史明细（RPT_INTSELECTION_LIMITUP）。"""
+    return _dump(run_tool("get_limit_up_history", code=code, limit=limit))
 
 
 def main() -> None:

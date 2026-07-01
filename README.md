@@ -1,6 +1,8 @@
 # Eastmoney Stock Skills
 
-东方财富 A 股数据 + Agent Skills + **`/stock` 主命令**（查价 / 顾问分析一体化），支持 Cursor、Claude Code、Codex CLI。
+东方财富 A 股数据 + Agent Skills + **`/stock` 主命令**（查价 / **全量分析**），支持 Cursor、Claude Code、Codex CLI。
+
+**核心亮点**：分析时**拉齐基本面三表、估值、技术、资金、筹码、事件**，输出简洁可操作建议（看几日线、介入区间），**不使用**巴菲特/格雷厄姆等顾问角色模块。
 
 > **免责声明**：数据仅供参考，不构成任何投资建议。
 
@@ -40,11 +42,18 @@ bash scripts/install.sh --target all --scope project
 
 | 组件 | 目录 | 作用 |
 |------|------|------|
-| 分析 Skills | `agent-skills/` | 基本面/技术面/资金面等 workflow |
-| Cursor 快捷指令 | `agent-commands/` | `/stock` 等 |
+| 分析 Skills | `agent-skills/` | 主编排、全量分析 workflow |
+| Cursor 快捷指令 | `agent-commands/` | `/stock` 主命令及专项快捷指令 |
 | Claude/Codex 快捷指令 | `agent-slash-skills/` | `/stock` 或 `$stock` |
 
 安装完成后**重启** Cursor / Claude Code / Codex。
+
+**试试分析（安装后）：**
+
+```
+/stock 分析 贵州茅台
+/stock 帮我看看黔源电力能不能买，看几日线
+```
 
 ---
 
@@ -66,7 +75,7 @@ bash scripts/install.sh --target cursor --scope project # 仅本仓库
 | 快捷指令 | `~/.cursor/commands/` | `.cursor/commands/` |
 | MCP 配置 | — | `.cursor/mcp.json`（仓库已含） |
 
-### 启用 MCP（推荐，模型可直接调 19 个数据工具）
+### 启用 MCP（推荐，模型可直接调全部数据工具）
 
 1. 打开 Cursor → **Settings → MCP**
 2. 确认 `eastmoney-stock` 已加载（读取本项目 `.cursor/mcp.json`）
@@ -81,13 +90,12 @@ python -m mcp_server
 
 ### Cursor 使用示例
 
-**主命令 `/stock`**（推荐：一条指令完成查价或顾问分析）：
+**主命令 `/stock`**：
 
 ```
 /stock 贵州茅台
-/stock 帮我分析一下贵州茅台，推断近期投资建议
-/stock buffett 宁德时代
-/stock list
+/stock 分析 宁德时代，近期能不能介入
+/stock 帮我看看比亚迪，看几日线
 ```
 
 专项快捷命令（仅当用户明确只要某一维度时使用）：
@@ -144,11 +152,9 @@ bash scripts/install.sh --target claude --what skills
 
 ```
 /stock 贵州茅台
-/stock 600519
-/stock-analyze 全面看看宁德时代值不值得研究
+/stock 分析 宁德时代，能不能买
+/stock-analyze 比亚迪
 /stock-fund 招商银行
-/stock-sector 今天什么板块涨得好
-/stock-news 隆基绿能最近有什么公告
 ```
 
 自然语言（会自动匹配分析 Skills）：
@@ -206,14 +212,10 @@ bash scripts/install.sh --target agents --what slash
 Codex 用 **`$技能名`** 显式调用（推荐）：
 
 ```
-$stock 贵州茅台现在多少钱
-$stock-analyze 宁德时代
+$stock 贵州茅台
+$stock 分析 宁德时代
+$stock-analyze 比亚迪
 $stock-fund 600519
-$stock-chip 比亚迪
-$stock-sector 半导体
-$stock-basic 五粮液
-$stock-kline 招商银行
-$stock-news 隆基绿能
 ```
 
 也可输入 `/skills` 从列表中选择 `stock`、`stock-analyze` 等。
@@ -236,9 +238,8 @@ python scripts/em.py get_realtime_quote --secid 1.600519
 
 | 作用 | Cursor / Claude | Codex | 示例 |
 |------|-----------------|-------|------|
-| **主命令（查价+顾问分析）** | **`/stock`** | **`$stock`** | **`/stock 分析 贵州茅台`** |
-| 全面分析（别名） | `/stock-analyze` | `$stock-analyze` | 同 `/stock 分析 宁德时代` |
-| 指定顾问（别名） | `/stock-role` | `$stock-role` | 同 `/stock lynch 300750` |
+| **主命令** | **`/stock`** | **`$stock`** | **`/stock 分析 贵州茅台`** |
+| 全面分析（别名） | `/stock-analyze` | `$stock-analyze` | 同 `/stock 分析` |
 | 资金面 | `/stock-fund` | `$stock-fund` | `/stock-fund 600519` |
 | 筹码 | `/stock-chip` | `$stock-chip` | `/stock-chip 比亚迪` |
 | K 线 | `/stock-kline` | `$stock-kline` | `/stock-kline 招商银行` |
@@ -248,41 +249,38 @@ python scripts/em.py get_realtime_quote --secid 1.600519
 
 ---
 
-## `/stock` 主命令（一体化流程）
+## `/stock` 全量分析
 
-一条指令完成：**理解意图 → 选投资顾问 → 按顾问指标拉数 → 顾问统一解读**。
+分析时 **尽量拉全 MCP/CLI 工具**，再写 **6 节简洁报告**（不是顾问角色、不是数据 dump）。
 
-```
-/stock 600519                              # 查现价
-/stock 帮我分析贵州茅台，给近期投资建议      # 综合顾问报告（非工具拼接）
-/stock buffett 宁德时代                     # 巴菲特视角
-/stock list                                # 列出顾问流派
-```
+模板见 [`agent-skills/stock-main/analysis-report.md`](agent-skills/stock-main/analysis-report.md)。
 
-| 步骤 | 说明 |
+### 分析会拉哪些数据
+
+| 类别 | 工具 |
 |------|------|
-| 1. 意图 | 查价 vs 分析 vs 指定顾问 |
-| 2. 顾问 | 默认 `composite`；可指定 graham / buffett / lynch 等 |
-| 3. 拉数 | **只拉该顾问关心的指标**（见 advisors.md） |
-| 4. 输出 | **一份**顾问报告，禁止按「资金面/筹码/技术面」分工具堆砌 |
+| **基本面** | 公司简介、**利润表/资产负债表/现金流**、估值、十大股东、股东户数 |
+| **行情技术** | 现价、K 线、MA5/20/60、相对沪深300、指标解读、短线盯盘 |
+| **资金筹码** | 个股/大盘资金流、筹码分布 |
+| **事件板块** | 大事提醒、新闻/公告、板块成分、龙虎榜（如有） |
 
-`/stock-analyze`、`/stock-role` 是快捷别名；子命令 `/stock-fund` 等仅在用户**明确**单一维度时使用。
+### 报告结构（6 节）
 
-### 顾问 Presets
+1. **结论与近期操作** — 看几日线、操作倾向、介入区间、确认/回避条件  
+2. 基本面与估值  
+3. 技术面  
+4. 资金与筹码  
+5. 事件与板块  
+6. 主要风险  
 
-| ID | 名称 | 代表人物 | 核心命题 |
-|----|------|----------|----------|
-| `graham` | 深度价值 | 格雷厄姆、施洛斯 | 安全边际、显著低于内在价值 |
-| `buffett` | 质量价值 | 巴菲特、芒格 | 合理价格买入伟大公司 |
-| `fisher` | 成长投资 | 菲利普·费雪 | 高成长优质企业长期持有 |
-| `lynch` | GARP | 彼得·林奇 | PEG、成长与估值匹配 |
-| `soros` | 宏观反身性 | 乔治·索罗斯 | 趋势、资金与叙事自我强化 |
-| `dalio` | 宏观周期 | 瑞·达里奥 | 经济周期、相对强弱 |
-| `composite` | 综合顾问 | 多流派 | 交叉验证，标注分歧 |
+### 用法
 
-详细指标权重、行业 profile、报告模板见 [`agent-skills/stock-investment-advisor/advisors.md`](agent-skills/stock-investment-advisor/advisors.md)。
+```
+/stock 分析 600519
+/stock 帮我看看能不能买，看几日线
+```
 
-> **合规**：结论为「低估 / 合理 / 高估 / 观望 / 数据不足」，禁止「必涨 / 必买」。风格化研究，不构成投资建议。
+`/stock-analyze` 与 `/stock 分析` 相同。`/stock-role` **已废弃**（原投资顾问角色不适合 A 股主流程）。
 
 ---
 
@@ -368,8 +366,8 @@ python scripts/em.py compare_performance --secid 1.600519 --benchmark-code 00030
 
 | Skill | 用途 |
 |-------|------|
-| **`stock-main`** | **`/stock` 主编排：意图路由 + 顾问拉数 + 一体化输出** |
-| `eastmoney-api` | 工具规范、secid、限流 |
+| **`stock-main`** | **`/stock` 主编排：全量拉数 + 6 节报告** |
+| `stock-analysis-orchestrator` | 全量分析工具清单 |
 | `stock-quick-lookup` | 快速查价 |
 | `stock-fundamental-analysis` | 基本面 |
 | `stock-technical-analysis` | 技术面 / K 线 |
@@ -378,8 +376,8 @@ python scripts/em.py compare_performance --secid 1.600519 --benchmark-code 00030
 | `stock-historical-analysis` | 历史统计 |
 | `stock-sector-analysis` | 板块 |
 | `stock-event-research` | 新闻 / 公告 / 股东 |
-| `stock-analysis-orchestrator` | 综合分析编排 |
-| `stock-investment-advisor` | 投资顾问流派（配合 `/stock-role`） |
+| `stock-investment-advisor` | **已废弃**（原顾问角色，请用 stock-main） |
+| `eastmoney-api` | 工具规范、secid、限流 |
 
 ---
 
@@ -387,6 +385,7 @@ python scripts/em.py compare_performance --secid 1.600519 --benchmark-code 00030
 
 | 能力 | 说明 |
 |------|------|
+| **`/stock` 全量分析** | 基本面三表 + 技术 + 资金 + 筹码 + 事件 |
 | 实时行情 | 价格、涨跌幅、量额、PE、市值 |
 | K 线 | 日/周/月/分钟，前复权/后复权 |
 | 基本面 | 财报、估值、公司简介 |
@@ -407,9 +406,9 @@ python scripts/em.py compare_performance --secid 1.600519 --benchmark-code 00030
 
 ---
 
-## MCP 工具（19 个，Cursor）
+## MCP 工具（27 个，Cursor）
 
-`resolve_symbol` · `search_stocks` · `get_realtime_quote` · `get_kline` · `get_market_snapshot` · `get_company_profile` · `get_financial_statements` · `get_valuation_metrics` · `get_shareholders` · `get_dragon_tiger` · `get_news_and_reports` · `get_stock_fund_flow` · `get_fund_flow_rank` · `get_market_fund_flow` · `get_chip_distribution` · `get_historical_series` · `compare_performance` · `get_sector_overview` · `get_sector_detail`
+含：基本面三表、估值、股东户数、大事提醒、指标解读、短线盯盘、筹码、板块等。完整列表：`python scripts/em.py list`
 
 ---
 
