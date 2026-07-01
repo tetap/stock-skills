@@ -6,13 +6,22 @@ description: >-
 
 # 技术面分析
 
+## 何时转交 stock-main
+
+| 用户意图 | 转交 |
+|----------|------|
+| 能不能买 / 看几日线 / 全量 | **`/stock 分析 {标的}`** |
+| 仅看趋势、支撑压力 | **本 Skill**（`/stock-kline`） |
+
+`get_quant_technical` 可在本 Skill 使用，但 **quant 非策略信号**；全量报告仍走 stock-main。
+
 ## Workflow
 
 1. `resolve_symbol --query "{标的}"`
 2. `get_kline --secid {secid} --period daily --adjust qfq --limit 120`
 3. `get_realtime_quote --secid {secid}`
 4. 可选：`get_historical_series --secid {secid} --indicators ma --limit 120`
-5. 可选：`get_alpha158_score` + `get_alpha360_score`（表格因子 + 时序序列，交叉验证）
+5. 可选：`get_quant_technical --secid {secid}`（158+360+quant_verdict，注意 oos_status）
 6. 可选：`get_stock_fund_flow --secid {secid} --limit 10`（量价背离）
 
 ## Alpha360 时序输入

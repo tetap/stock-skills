@@ -6,6 +6,13 @@ description: >-
 
 # 筹码分析
 
+## 何时转交 stock-main
+
+| 用户意图 | 转交 |
+|----------|------|
+| 能不能买 / 全量分析 | **`/stock 分析 {标的}`** |
+| 仅问成本区、集中度 | **本 Skill**（`/stock-chip`） |
+
 ## Workflow
 
 1. `resolve_symbol --query "{标的}"`

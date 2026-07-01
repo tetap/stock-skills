@@ -8,6 +8,14 @@ description: >-
 
 主入口也可用 **`/stock 电池板块走势，推荐几只`**，模板见 **stock-main/sector-report.md**。
 
+## 何时转交 stock-main
+
+| 用户意图 | 转交 |
+|----------|------|
+| 推荐几只 / 看好 / 龙头 + 走势 | **sector-report（C 流程）** + `get_review_protocol(flow=C)` |
+| 仅看板块涨跌榜、成分股 | **本 Skill**（`/stock-sector`） |
+| 全市场热点无板块 | **`/stock-market`**（D 流程） |
+
 ## Workflow
 
 **定位板块（口语化）：**

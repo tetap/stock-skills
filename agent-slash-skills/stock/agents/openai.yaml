@@ -1,4 +1,4 @@
 interface:
-  display_name: "查股现价"
+  display_name: "查股/主命令"
 policy:
   allow_implicit_invocation: false

@@ -6,6 +6,13 @@ description: >-
 
 # 基本面分析
 
+## 何时转交 stock-main
+
+| 用户意图 | 转交 |
+|----------|------|
+| 能不能买 / 估值+技术+资金综合 | **`/stock 分析 {标的}`** |
+| 仅看财报、估值、股东 | **本 Skill**（`/stock-basic`） |
+
 ## Workflow
 
 1. `resolve_symbol --query "{标的}"`

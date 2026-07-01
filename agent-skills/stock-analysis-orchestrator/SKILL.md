@@ -37,6 +37,15 @@ description: >-
 
 **不再使用** stock-investment-advisor / 顾问角色。
 
+## 何时转交
+
+| 场景 | 入口 |
+|------|------|
+| 单维度（仅资金/筹码/K线/基本面） | 对应专项 Skill + `/stock-*` 命令 |
+| 个股全量 + 审核 | **stock-main** B 流程 |
+| 板块选股 | sector-report C 流程 |
+| 市场热点 | market-brief / `/stock-market` D 流程 |
+
 ## 合规
 
 不给必涨必买；末尾：**仅供参考，不构成投资建议。**
