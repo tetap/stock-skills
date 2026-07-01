@@ -162,6 +162,29 @@ def run_deepar(
     print(f"metrics: {meta['model_dir']}/metrics.json")
 
 
+def run_tft(
+    secids: list[str],
+    *,
+    limit: int,
+    train_ratio: float,
+    max_epochs: int,
+) -> None:
+    from eastmoney.client import EastMoneyClient
+    from eastmoney.gluonts_adapter import train_tft
+
+    client = EastMoneyClient(min_interval=1.0, max_retries=4)
+    meta = train_tft(
+        client,
+        secids,
+        limit=limit,
+        train_ratio=train_ratio,
+        max_epochs=max_epochs,
+    )
+    print(f"GluonTS TFT 已保存: {meta['model_dir']}")
+    print(f"OOS: {meta.get('oos_passed')}  series={meta.get('series_count')}")
+    print(f"metrics: {meta['model_dir']}/metrics.json")
+
+
 def init_tcn(out: Path) -> None:
     import torch
 
@@ -175,10 +198,11 @@ def init_tcn(out: Path) -> None:
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="训练 Alpha158 LGB / Alpha360 TCN / GluonTS DeepAR")
+    p = argparse.ArgumentParser(description="训练 Alpha158 LGB / Alpha360 TCN / GluonTS DeepAR·TFT")
     p.add_argument("--lgb", action="store_true", help="调优 LightGBM → models/alpha158_lgb.txt")
     p.add_argument("--tcn", action="store_true", help="训练 Alpha360 TCN → models/alpha360_tcn.pt")
-    p.add_argument("--deepar", action="store_true", help="GluonTS DeepAR（PandasDataset）→ models/gluonts_deepar/")
+    p.add_argument("--deepar", action="store_true", help="GluonTS DeepAR → models/gluonts_deepar/")
+    p.add_argument("--tft", action="store_true", help="GluonTS TFT → models/gluonts_tft/")
     p.add_argument("--tcn-init", action="store_true", help="导出 TCN 随机初始化")
     p.add_argument("--secids", default=",".join(DEFAULT_SECIDS))
     p.add_argument("--limit", type=int, default=500)
@@ -187,11 +211,12 @@ def main() -> None:
     p.add_argument("--grid", action="store_true", help="LGB 网格搜参（OOS IC 选优）")
     p.add_argument("--epochs", type=int, default=40, help="TCN 训练轮数")
     p.add_argument("--deepar-epochs", type=int, default=15)
+    p.add_argument("--tft-epochs", type=int, default=10)
     p.add_argument("--lgb-out", default=str(MODEL_DIR / "alpha158_lgb.txt"))
     p.add_argument("--tcn-out", default=str(MODEL_DIR / "alpha360_tcn.pt"))
     args = p.parse_args()
 
-    if not any([args.lgb, args.tcn, args.deepar, args.tcn_init]):
+    if not any([args.lgb, args.tcn, args.deepar, args.tft, args.tcn_init]):
         p.print_help()
         raise SystemExit(0)
 
@@ -217,6 +242,8 @@ def main() -> None:
         )
     if args.deepar:
         run_deepar(secids, limit=args.limit, train_ratio=args.train_ratio, max_epochs=args.deepar_epochs)
+    if args.tft:
+        run_tft(secids, limit=args.limit, train_ratio=args.train_ratio, max_epochs=args.tft_epochs)
     if args.tcn_init:
         init_tcn(Path(args.tcn_out))
 

@@ -21,8 +21,10 @@ def _band(score: float) -> str:
 def build_quant_verdict(
     alpha158: dict[str, Any],
     alpha360: dict[str, Any],
+    *,
+    ts_forecast: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """合并表格因子与序列（含 5 日/60 日）打分，生成报告用 verdict。"""
+    """合并表格因子、序列分与时序模型（DeepAR/TFT），生成报告用 verdict。"""
     a158 = alpha158.get("inference") or {}
     a360 = alpha360.get("inference") or {}
 
@@ -30,11 +32,15 @@ def build_quant_verdict(
     s360 = float(a360.get("score") or 0)
     s5 = float(a360.get("score_5d") if a360.get("score_5d") is not None else s360)
     s60 = float(a360.get("score_60d") if a360.get("score_60d") is not None else s360)
+    s_ts = float(ts_forecast.get("score") or 0) if ts_forecast else None
 
     b158 = _band(s158)
     b5 = _band(s5)
     b60 = _band(s60)
+    b_ts = _band(s_ts) if s_ts is not None else None
     divergence = (b5 != b60) or (abs(s158) >= 20 and b158 != b60)
+    if b_ts and b_ts != b158 and abs(s_ts or 0) >= 20:
+        divergence = True
 
     summary = "量化中性"
     detail = "158 与 360 均未给出强方向，需结合基本面/资金/事件定夺。"
@@ -64,7 +70,6 @@ def build_quant_verdict(
         summary = "短线回调·中线尚稳"
         detail = "60 日序列仍偏多，但近 5 日走弱；适合等回调至支撑再评估。"
 
-    # --- 5/60 同向 ---
     elif b5 == b60 == "偏空":
         summary = "量化偏空"
         if b158 == "中性":
@@ -98,7 +103,6 @@ def build_quant_verdict(
                 "反弹能否延续取决于因子是否跟进。"
             )
 
-    # --- 158 与 60 日分歧（5 日已单独处理过的不再进入）---
     elif b158 == "偏多" and b60 == "偏空":
         summary = "因子改善·序列未确认"
         detail = "表格因子略强，时序 60 日未确认反转；需放量收复关键均线后再看。"
@@ -115,9 +119,28 @@ def build_quant_verdict(
         summary = "量化偏多"
         detail = "158 与 60 日同向偏多，近 5 日暂中性；趋势尚可，等待短周期确认。"
 
-    return {
+    # --- 时序模型（DeepAR/TFT）与 158/360 交叉 ---
+    if ts_forecast and s_ts is not None and b_ts:
+        method = ts_forecast.get("method", "gluonts")
+        ts_label = "TFT" if "tft" in method else "DeepAR"
+        ts_oos = ts_forecast.get("oos_passed")
+
+        if b_ts == b158 == b60 and b_ts != "中性":
+            summary = f"量化{b_ts.replace('偏', '')}·三维共振"
+            detail = f"158、360 与 {ts_label} 同向{b_ts}；{detail}"
+        elif b_ts != b158 and abs(s_ts) >= 20:
+            detail = f"{detail} {ts_label}({b_ts})与 Alpha158({b158})分歧，降置信。"
+        elif b_ts == "偏多" and summary.startswith("量化偏空"):
+            detail = f"{detail} 但 {ts_label} 隐含反弹，宜缩小仓位试错。"
+        elif b_ts == "偏空" and "偏多" in summary:
+            detail = f"{detail} 但 {ts_label} 提示回落风险，勿追高。"
+
+        if ts_oos is False:
+            detail = f"{detail}（{ts_label} 未过 OOS，时序信号仅辅助）"
+
+    result: dict[str, Any] = {
         "summary": summary,
-        "detail": detail,
+        "detail": detail.strip(),
         "divergence": divergence,
         "scores": {
             "alpha158": s158,
@@ -132,6 +155,16 @@ def build_quant_verdict(
         },
         "_note": "启发式量化结论，须与 MA/资金/新闻交叉验证",
     }
+    if ts_forecast and s_ts is not None:
+        result["scores"]["timeseries"] = s_ts
+        result["bands"]["timeseries"] = b_ts
+        result["timeseries_model"] = {
+            "method": ts_forecast.get("method"),
+            "verdict": ts_forecast.get("verdict"),
+            "implied_return": ts_forecast.get("implied_return"),
+            "oos_passed": ts_forecast.get("oos_passed"),
+        }
+    return result
 
 
 def get_quant_technical(
@@ -145,11 +178,6 @@ def get_quant_technical(
     a158 = get_alpha158_score(client, secid, period=period, adjust=adjust)
     a360 = get_alpha360_score(client, secid, period=period, adjust=adjust)
     oos = load_lgb_oos_status()
-    verdict = build_quant_verdict(a158, a360)
-    if oos.get("report_cap"):
-        verdict = dict(verdict)
-        verdict["oos_warning"] = oos["report_cap"]
-
     gluonts_score = None
     try:
         from eastmoney.gluonts_adapter import try_gluonts_forecast_score
@@ -158,13 +186,22 @@ def get_quant_technical(
     except Exception:
         gluonts_score = None
 
-    if gluonts_score and gluonts_score.get("score") is not None:
+    verdict = build_quant_verdict(a158, a360, ts_forecast=gluonts_score)
+
+    warnings: list[str] = []
+    if oos.get("report_cap"):
+        warnings.append(str(oos["report_cap"]))
+    ms = model_status()
+    tcn_oos = ms.get("oos_status_tcn") or {}
+    if tcn_oos.get("report_cap"):
+        warnings.append(str(tcn_oos["report_cap"]))
+    if gluonts_score and gluonts_score.get("oos_passed") is False:
+        method = gluonts_score.get("method", "gluonts")
+        warnings.append(f"{method} 未过 OOS；时序预测仅辅助。")
+
+    if warnings:
         verdict = dict(verdict)
-        verdict["gluonts_deepar"] = {
-            "score": gluonts_score["score"],
-            "verdict": gluonts_score.get("verdict"),
-            "implied_return": gluonts_score.get("implied_return"),
-        }
+        verdict["oos_warning"] = " ".join(dict.fromkeys(warnings))
 
     return {
         "secid": secid,

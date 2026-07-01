@@ -17,7 +17,10 @@
 
 ### 变更
 
-- **README 全面重设计**：横幅图、架构/流程 Mermaid、快速开始、用法示例与 GitHub 徽章
+- **`quant_verdict` 合成 DeepAR/TFT**：158/360/时序三维共振、分歧降置信、统一 `oos_warning`
+- **`build_quant_verdict(ts_forecast=)`** 纳入时序模型分数与 OOS 状态
+- **GluonTS TFT**：`--tft` 训练 TemporalFusionTransformer；推理优先 OOS 通过的 TFT
+- **`train_demo_model.sh`**：4 股 + embargo 5d + 调优 LGB 默认流程
 - `get_review_protocol(flow=C|D)` 返回 `required_tools` 清单
 - 板块 `search_sectors` 单测回归（空 query、类型过滤、打分、跨类型）
 

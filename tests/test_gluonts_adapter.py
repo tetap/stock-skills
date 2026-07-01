@@ -11,7 +11,9 @@ class TestGluontsAdapter(unittest.TestCase):
     def test_status_keys(self) -> None:
         st = gluonts_status()
         self.assertIn("available", st)
-        self.assertIn("install_hint", st)
+        self.assertIn("models", st)
+        self.assertIn("gluonts_deepar", st["models"])
+        self.assertIn("gluonts_tft", st["models"])
 
     @unittest.skipUnless(GLUONTS_AVAILABLE, "未安装 gluonts")
     def test_bars_to_long_dataframe(self) -> None:

@@ -154,10 +154,11 @@ def model_status() -> dict[str, Any]:
             "available": tcn_path.is_file(),
             "train_hint": "python scripts/train_quant_models.py --tcn",
         },
-        "gluonts_deepar": gluonts_status(),
+        "gluonts": gluonts_status(),
         "oos_status": load_lgb_oos_status(model_path=lgb_path),
         "oos_status_tcn": _load_tcn_oos_status(tcn_path),
-        "oos_status_gluonts": load_gluonts_oos_status(),
+        "oos_status_gluonts_deepar": load_gluonts_oos_status(model_kind="gluonts_deepar"),
+        "oos_status_gluonts_tft": load_gluonts_oos_status(model_kind="gluonts_tft"),
         "train_hint": "python scripts/train_quant_models.py --help",
     }
 
@@ -171,12 +172,18 @@ def _load_tcn_oos_status(tcn_path: Path) -> dict[str, Any]:
         data = json.loads(metrics_path.read_text(encoding="utf-8"))
         oos = (data.get("best") or {}).get("out_of_sample") or {}
         gate = evaluate_oos_metrics(oos)
+        passed = gate["passed"]
         return {
             **base,
             "available": True,
-            "oos_passed": gate["passed"],
+            "oos_passed": passed,
             "out_of_sample": oos,
             "model_kind": data.get("model_kind", "alpha360_tcn"),
+            "report_cap": (
+                None
+                if passed
+                else "TCN 未过 OOS；360 序列分仅辅助，评级上限「右侧等待」"
+            ),
         }
     except (OSError, ValueError, TypeError):
         return {**base, "available": False, "oos_passed": None, "reason": "metrics_read_error"}

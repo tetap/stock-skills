@@ -5,6 +5,7 @@
 | `alpha158_lgb.txt` | Alpha158 LightGBM（调优 + embargo + 早停） | `python scripts/train_quant_models.py --lgb` |
 | `alpha360_tcn.pt` | Alpha360 TCN 真实训练 | `python scripts/train_quant_models.py --tcn` |
 | `gluonts_deepar/` | GluonTS DeepAR（PandasDataset 长表） | `python scripts/train_quant_models.py --deepar` |
+| `gluonts_tft/` | GluonTS TemporalFusionTransformer | `python scripts/train_quant_models.py --tft` |
 
 ## 训练命令
 
@@ -19,6 +20,9 @@ python scripts/train_quant_models.py --tcn --epochs 40
 
 # GluonTS DeepAR（K 线 → 长表 item_id/timestamp/target，见 GluonTS 文档）
 python scripts/train_quant_models.py --deepar --deepar-epochs 15
+
+# GluonTS TFT（Temporal Fusion Transformer，优先用于推理）
+python scripts/train_quant_models.py --tft --tft-epochs 10
 ```
 
 GluonTS 数据格式参考：[Pandas DataFrame dataset](https://ts.gluon.ai/stable/tutorials/data_manipulation/pandasdataframes.html)
@@ -76,7 +80,8 @@ bash scripts/ensure_demo_models.sh
 
 - `ALPHA158_MODEL_PATH` → LightGBM
 - `ALPHA360_MODEL_PATH` → TCN
-- `GLUONTS_MODEL_PATH` → DeepAR 目录（默认 `models/gluonts_deepar/`）
+- `GLUONTS_DEEPAR_PATH` → DeepAR 目录
+- `GLUONTS_TFT_PATH` → TFT 目录
 
 ## Qlib 官方模型
 

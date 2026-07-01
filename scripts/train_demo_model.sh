@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 训练演示用 Alpha158 LightGBM（小样本、无网格，约 1~3 分钟）
+# 训练演示用 Alpha158 LightGBM（调优超参 + embargo，约 2~5 分钟）
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -15,12 +15,15 @@ if ! .venv/bin/python -c "import lightgbm" 2>/dev/null; then
   .venv/bin/pip install -q -r requirements-ml.txt
 fi
 
-echo "[demo] 训练演示 LGB（2 股 × 200 日 K 线，80/20 OOS，慢速限流）..."
+DEMO_SECIDS="${DEMO_SECIDS:-1.600519,0.000001,0.002594,1.600036}"
+
+echo "[demo] 调优 LGB（${DEMO_SECIDS} × 300 日，embargo 5d，early stopping）..."
 .venv/bin/python scripts/train_quant_models.py \
   --lgb \
-  --secids "1.600519,0.000001" \
-  --limit 200 \
-  --train-ratio 0.8
+  --secids "$DEMO_SECIDS" \
+  --limit 300 \
+  --train-ratio 0.8 \
+  --embargo-days 5
 
 echo "[demo] 完成。权重: models/alpha158_lgb.txt"
 echo "[demo] OOS 指标: models/alpha158_lgb.metrics.json"

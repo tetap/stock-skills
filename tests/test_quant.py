@@ -128,8 +128,29 @@ class TestMlModels(unittest.TestCase):
         st = model_status()
         self.assertIn("alpha158_lightgbm", st)
         self.assertIn("alpha360_tcn", st)
-        self.assertIn("gluonts_deepar", st)
+        self.assertIn("gluonts", st)
         self.assertIn("oos_status", st)
+
+    def test_verdict_timeseries_resonance(self) -> None:
+        a158 = {"inference": {"score": 30, "verdict": "因子偏多"}}
+        a360 = {
+            "inference": {
+                "score": 35,
+                "score_5d": 30,
+                "score_60d": 28,
+                "verdict_5d": "序列偏多",
+                "verdict_60d": "序列偏多",
+            }
+        }
+        ts = {
+            "method": "gluonts_tft",
+            "score": 25,
+            "verdict": "TemporalFusionTransformer偏多",
+            "oos_passed": True,
+        }
+        v = build_quant_verdict(a158, a360, ts_forecast=ts)
+        self.assertIn("共振", v["summary"])
+        self.assertIn("timeseries", v["scores"])
 
     def test_oos_status_no_model(self) -> None:
         st = load_lgb_oos_status(model_path="/nonexistent/lgb.txt")

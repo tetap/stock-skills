@@ -1,17 +1,15 @@
-"""GluonTS PandasDataset 适配：K 线 → 长表 → DeepAR 训练/推理。
-
-参考: https://ts.gluon.ai/stable/tutorials/data_manipulation/pandasdataframes.html
-"""
+"""GluonTS 公共训练/推理（DeepAR · TFT · PandasDataset 长表）。"""
 
 from __future__ import annotations
 
 import json
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 MODEL_DIR = Path(__file__).resolve().parents[1] / "models"
-DEFAULT_GLUONTS_DIR = MODEL_DIR / "gluonts_deepar"
+DEFAULT_DEEPAR_DIR = MODEL_DIR / "gluonts_deepar"
+DEFAULT_TFT_DIR = MODEL_DIR / "gluonts_tft"
 
 GLUONTS_AVAILABLE = False
 _IMPORT_ERROR = ""
@@ -26,15 +24,41 @@ except ImportError as exc:  # pragma: no cover
     PandasDataset = None  # type: ignore
     _IMPORT_ERROR = str(exc)
 
+GLUONTS_MODELS: tuple[tuple[str, Path, str], ...] = (
+    ("gluonts_tft", DEFAULT_TFT_DIR, "TemporalFusionTransformer"),
+    ("gluonts_deepar", DEFAULT_DEEPAR_DIR, "DeepAR"),
+)
+
+
+def _resolve_model_dir(model_kind: str) -> Path:
+    env_map = {
+        "gluonts_deepar": "GLUONTS_DEEPAR_PATH",
+        "gluonts_tft": "GLUONTS_TFT_PATH",
+    }
+    default_map = {
+        "gluonts_deepar": DEFAULT_DEEPAR_DIR,
+        "gluonts_tft": DEFAULT_TFT_DIR,
+    }
+    env = env_map.get(model_kind, "GLUONTS_MODEL_PATH")
+    return Path(os.getenv(env, default_map.get(model_kind, DEFAULT_DEEPAR_DIR)))
+
 
 def gluonts_status() -> dict[str, Any]:
-    path = Path(os.getenv("GLUONTS_MODEL_PATH", DEFAULT_GLUONTS_DIR))
+    models: dict[str, Any] = {}
+    for kind, default_path, label in GLUONTS_MODELS:
+        path = _resolve_model_dir(kind)
+        models[kind] = {
+            "label": label,
+            "model_dir": str(path),
+            "model_ready": path.is_dir() and (path / "predictor.json").exists(),
+            "metrics": str(path / "metrics.json"),
+        }
     return {
         "available": GLUONTS_AVAILABLE,
-        "model_dir": str(path),
-        "model_ready": path.is_dir() and (path / "predictor.json").exists(),
         "import_error": _IMPORT_ERROR or None,
-        "install_hint": "pip install -r requirements-ml.txt  # 含 gluonts[torch]",
+        "install_hint": "pip install -r requirements-ml.txt",
+        "pandas_reference": "https://ts.gluon.ai/stable/tutorials/data_manipulation/pandasdataframes.html",
+        "models": models,
     }
 
 
@@ -48,7 +72,6 @@ def bars_to_long_dataframe(
     *,
     target: str = "close",
 ) -> Any:
-    """单股 K 线 → GluonTS 长表（item_id + timestamp + target + 动态特征）。"""
     if not GLUONTS_AVAILABLE or pd is None:
         raise ImportError(_IMPORT_ERROR or "gluonts 未安装")
 
@@ -86,7 +109,6 @@ def merge_secids_long_df(client: Any, secids: list[str], *, limit: int = 500) ->
 
 
 def build_pandas_dataset(df: Any, *, freq: str = "B") -> Any:
-    """长表 → GluonTS PandasDataset（含动态实特征 volume/return_1d）。"""
     if PandasDataset is None:
         raise ImportError(_IMPORT_ERROR or "gluonts 未安装")
     return PandasDataset.from_long_dataframe(
@@ -104,7 +126,6 @@ def temporal_train_test_dataframes(
     *,
     train_ratio: float = 0.8,
 ) -> tuple[Any, Any]:
-    """长表按全局时间切分 train/test。"""
     if pd is None:
         raise ImportError(_IMPORT_ERROR or "gluonts 未安装")
     cutoff = df["timestamp"].quantile(train_ratio)
@@ -117,45 +138,18 @@ def temporal_train_test_dataframes(
     return train_df, test_df
 
 
-def train_deepar(
-    client: Any,
-    secids: list[str],
+def _evaluate_gluonts_oos(
+    predictor: Any,
+    test_df: Any,
     *,
-    out_dir: Path | None = None,
-    limit: int = 500,
-    prediction_length: int = 5,
-    context_length: int = 60,
-    max_epochs: int = 15,
-    train_ratio: float = 0.8,
-) -> dict[str, Any]:
-    if not GLUONTS_AVAILABLE:
-        raise ImportError(_IMPORT_ERROR or "请先 pip install -r requirements-ml.txt")
+    context_length: int,
+    prediction_length: int,
+) -> dict[str, float]:
+    from eastmoney.backtest import evaluate_predictions
 
-    from gluonts.torch import Trainer
-    from gluonts.torch.model.deepar import DeepAREstimator
-
-    from eastmoney.backtest import evaluate_predictions, save_metrics
-    from eastmoney.ml_models import evaluate_oos_metrics
-
-    out = out_dir or DEFAULT_GLUONTS_DIR
-    out.mkdir(parents=True, exist_ok=True)
-
-    df = merge_secids_long_df(client, secids, limit=limit)
-    train_df, test_df = temporal_train_test_dataframes(df, train_ratio=train_ratio)
-    train_ds = build_pandas_dataset(train_df)
-
-    estimator = DeepAREstimator(
-        prediction_length=prediction_length,
-        context_length=context_length,
-        freq="B",
-        trainer=Trainer(max_epochs=max_epochs, batch_size=32, num_batches_per_epoch=50),
-    )
-    predictor = estimator.train(train_ds)
-
-    # OOS：测试集各序列末段 implied return vs 实际 5 日收益
     preds: list[float] = []
     labels: list[float] = []
-    for item_id, grp in test_df.groupby("item_id"):
+    for _item_id, grp in test_df.groupby("item_id"):
         grp = grp.sort_values("timestamp")
         if len(grp) < context_length + prediction_length + 1:
             continue
@@ -170,44 +164,152 @@ def train_deepar(
         preds.append(pred_close / last_close - 1)
         labels.append(actual_close / last_close - 1)
 
-    oos_m = evaluate_predictions(preds, labels) if len(preds) >= 3 else {
-        "ic": 0.0,
-        "direction_accuracy": 0.0,
-        "count": 0,
-        "rmse": 0.0,
-    }
+    if len(preds) >= 3:
+        return evaluate_predictions(preds, labels)
+    return {"ic": 0.0, "direction_accuracy": 0.0, "count": 0, "rmse": 0.0}
 
-    predictor.serialize(out)
+
+def _train_gluonts_model(
+    client: Any,
+    secids: list[str],
+    *,
+    model_kind: str,
+    out_dir: Path,
+    estimator_factory: Callable[..., Any],
+    limit: int = 500,
+    prediction_length: int = 5,
+    context_length: int = 60,
+    max_epochs: int = 15,
+    train_ratio: float = 0.8,
+) -> dict[str, Any]:
+    if not GLUONTS_AVAILABLE:
+        raise ImportError(_IMPORT_ERROR or "请先 pip install -r requirements-ml.txt")
+
+    from eastmoney.backtest import save_metrics
+    from eastmoney.ml_models import evaluate_oos_metrics
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    df = merge_secids_long_df(client, secids, limit=limit)
+    train_df, test_df = temporal_train_test_dataframes(df, train_ratio=train_ratio)
+    train_ds = build_pandas_dataset(train_df)
+
+    estimator = estimator_factory(
+        prediction_length=prediction_length,
+        context_length=context_length,
+    )
+    predictor = estimator.train(train_ds)
+    oos_m = _evaluate_gluonts_oos(
+        predictor,
+        test_df,
+        context_length=context_length,
+        prediction_length=prediction_length,
+    )
+    predictor.serialize(out_dir)
+
+    gate = evaluate_oos_metrics(oos_m)
     meta = {
-        "model_kind": "gluonts_deepar",
-        "model_dir": str(out),
+        "model_kind": model_kind,
+        "model_dir": str(out_dir),
         "secids": secids,
         "prediction_length": prediction_length,
         "context_length": context_length,
         "train_ratio": train_ratio,
         "series_count": int(df["item_id"].nunique()),
         "best": {"out_of_sample": oos_m},
+        "oos_passed": gate["passed"],
         "pandas_format": "long_dataframe(item_id,timestamp,target,feat_dynamic_real)",
         "reference": "https://ts.gluon.ai/stable/tutorials/data_manipulation/pandasdataframes.html",
     }
-    gate = evaluate_oos_metrics(oos_m)
-    meta["oos_passed"] = gate["passed"]
-    save_metrics(str(out / "metrics.json"), meta)
+    save_metrics(str(out_dir / "metrics.json"), meta)
     return meta
 
 
-def try_gluonts_forecast_score(
+def train_deepar(
+    client: Any,
+    secids: list[str],
+    *,
+    out_dir: Path | None = None,
+    limit: int = 500,
+    prediction_length: int = 5,
+    context_length: int = 60,
+    max_epochs: int = 15,
+    train_ratio: float = 0.8,
+) -> dict[str, Any]:
+    from gluonts.torch import Trainer
+    from gluonts.torch.model.deepar import DeepAREstimator
+
+    out = out_dir or _resolve_model_dir("gluonts_deepar")
+
+    def factory(*, prediction_length: int, context_length: int) -> DeepAREstimator:
+        return DeepAREstimator(
+            prediction_length=prediction_length,
+            context_length=context_length,
+            freq="B",
+            trainer=Trainer(max_epochs=max_epochs, batch_size=32, num_batches_per_epoch=50),
+        )
+
+    return _train_gluonts_model(
+        client,
+        secids,
+        model_kind="gluonts_deepar",
+        out_dir=out,
+        estimator_factory=factory,
+        limit=limit,
+        prediction_length=prediction_length,
+        context_length=context_length,
+        max_epochs=max_epochs,
+        train_ratio=train_ratio,
+    )
+
+
+def train_tft(
+    client: Any,
+    secids: list[str],
+    *,
+    out_dir: Path | None = None,
+    limit: int = 500,
+    prediction_length: int = 5,
+    context_length: int = 60,
+    max_epochs: int = 10,
+    train_ratio: float = 0.8,
+) -> dict[str, Any]:
+    from gluonts.torch import Trainer
+    from gluonts.torch.model.tft import TemporalFusionTransformerEstimator
+
+    out = out_dir or _resolve_model_dir("gluonts_tft")
+
+    def factory(*, prediction_length: int, context_length: int) -> TemporalFusionTransformerEstimator:
+        return TemporalFusionTransformerEstimator(
+            prediction_length=prediction_length,
+            context_length=context_length,
+            freq="B",
+            trainer=Trainer(max_epochs=max_epochs, batch_size=16, num_batches_per_epoch=50),
+        )
+
+    return _train_gluonts_model(
+        client,
+        secids,
+        model_kind="gluonts_tft",
+        out_dir=out,
+        estimator_factory=factory,
+        limit=limit,
+        prediction_length=prediction_length,
+        context_length=context_length,
+        max_epochs=max_epochs,
+        train_ratio=train_ratio,
+    )
+
+
+def _forecast_from_dir(
     client: Any,
     secid: str,
+    model_dir: Path,
     *,
-    model_dir: str | Path | None = None,
+    model_kind: str,
+    method_label: str,
     limit: int = 120,
 ) -> dict[str, Any] | None:
-    """DeepAR 预测未来路径 → 量化分数。"""
-    if not GLUONTS_AVAILABLE:
-        return None
-    path = Path(model_dir or os.getenv("GLUONTS_MODEL_PATH", DEFAULT_GLUONTS_DIR))
-    if not (path / "predictor.json").exists():
+    if not GLUONTS_AVAILABLE or not (model_dir / "predictor.json").exists():
         return None
 
     from gluonts.model.predictor import Predictor
@@ -221,7 +323,7 @@ def try_gluonts_forecast_score(
 
     df = bars_to_long_dataframe(secid, bars)
     dataset = build_pandas_dataset(df)
-    predictor = Predictor.deserialize(path)
+    predictor = Predictor.deserialize(model_dir)
     forecasts = list(predictor.predict(dataset))
     if not forecasts:
         return None
@@ -233,28 +335,54 @@ def try_gluonts_forecast_score(
     score = _tanh_score(implied_ret * 50, scale=35)
 
     if score >= 20:
-        verdict = "DeepAR偏多"
+        verdict = f"{method_label}偏多"
     elif score <= -20:
-        verdict = "DeepAR偏空"
+        verdict = f"{method_label}偏空"
     else:
-        verdict = "DeepAR中性"
+        verdict = f"{method_label}中性"
 
+    oos = load_gluonts_oos_status(model_dir=model_dir)
     return {
-        "method": "gluonts_deepar",
-        "model_path": str(path),
+        "method": model_kind,
+        "model_path": str(model_dir),
         "score": score,
         "verdict": verdict,
         "implied_return": round(implied_ret, 6),
         "forecast_horizon": len(fc.mean),
-        "interpretation": f"GluonTS DeepAR 隐含 {implied_ret:.2%} → {score}（{verdict}）",
-        "_note": "PandasDataset 长表训练；详见 models/gluonts_deepar/metrics.json",
+        "oos_passed": oos.get("oos_passed"),
+        "interpretation": f"GluonTS {method_label} 隐含 {implied_ret:.2%} → {score}（{verdict}）",
+        "_note": f"metrics: {model_dir}/metrics.json",
     }
 
 
-def load_gluonts_oos_status(*, model_dir: str | Path | None = None) -> dict[str, Any]:
-    path = Path(model_dir or os.getenv("GLUONTS_MODEL_PATH", DEFAULT_GLUONTS_DIR))
+def try_gluonts_forecast_score(
+    client: Any,
+    secid: str,
+    *,
+    limit: int = 120,
+) -> dict[str, Any] | None:
+    """优先 OOS 通过的 TFT，其次 DeepAR，否则返回首个可用模型。"""
+    if not GLUONTS_AVAILABLE:
+        return None
+
+    candidates: list[dict[str, Any]] = []
+    for kind, default_path, label in GLUONTS_MODELS:
+        path = _resolve_model_dir(kind)
+        row = _forecast_from_dir(client, secid, path, model_kind=kind, method_label=label, limit=limit)
+        if row:
+            candidates.append(row)
+
+    if not candidates:
+        return None
+
+    passed = [c for c in candidates if c.get("oos_passed") is True]
+    return passed[0] if passed else candidates[0]
+
+
+def load_gluonts_oos_status(*, model_dir: str | Path | None = None, model_kind: str = "gluonts_deepar") -> dict[str, Any]:
+    path = Path(model_dir) if model_dir else _resolve_model_dir(model_kind)
     metrics_path = path / "metrics.json"
-    base = {"metrics_path": str(metrics_path), "model_dir": str(path)}
+    base = {"metrics_path": str(metrics_path), "model_dir": str(path), "model_kind": model_kind}
     if not metrics_path.is_file():
         return {**base, "available": False, "oos_passed": None, "reason": "no_metrics"}
     try:
@@ -268,7 +396,11 @@ def load_gluonts_oos_status(*, model_dir: str | Path | None = None) -> dict[str,
             "available": True,
             "oos_passed": gate["passed"],
             "out_of_sample": oos,
-            "model_kind": data.get("model_kind"),
+            "model_kind": data.get("model_kind", model_kind),
         }
     except (OSError, ValueError, TypeError):
         return {**base, "available": False, "oos_passed": None, "reason": "metrics_read_error"}
+
+
+# 兼容旧 import
+DEFAULT_GLUONTS_DIR = DEFAULT_DEEPAR_DIR
