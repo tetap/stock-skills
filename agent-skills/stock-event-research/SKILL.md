@@ -52,7 +52,7 @@ python scripts/em.py get_news_and_reports --code 002074 --content-type announcem
 
 1. 在 Chrome 或 Safari 打开 **[https://xueqiu.com/hq](https://xueqiu.com/hq)** 并登录。
 2. **直接调用工具**，无需 `export XUEQIU_TOKEN`。
-3. 读取失败时：确认 `pip install browser-cookie3`；macOS 给 Cursor **完全磁盘访问权限**。
+3. 读取失败时：重新执行 `bash scripts/install.sh --target cursor`（自动 pip）；macOS 给 Cursor **完全磁盘访问权限**。
 4. `XUEQIU_TOKEN` 仅作 CI / 无浏览器环境兜底。
 
 ```bash

@@ -7,16 +7,21 @@ description: >-
 
 # Eastmoney API
 
-## CLI
+## CLI / 依赖
 
-项目根目录执行：
+**推荐**：安装 Skills 时自动创建 `.venv` 并 `pip install`（无需手动装依赖）：
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-python scripts/em.py list
-python scripts/em.py resolve_symbol --query "贵州茅台"
-python scripts/em.py get_realtime_quote --secid 1.600519
+bash scripts/install.sh --target cursor --scope user
+# 量化可选：bash scripts/install.sh --target cursor --with-ml
+```
+
+手动调试：
+
+```bash
+.venv/bin/python scripts/em.py list
+.venv/bin/python scripts/em.py resolve_symbol --query "贵州茅台"
+.venv/bin/python scripts/em.py get_realtime_quote --secid 1.600519
 ```
 
 ## MCP（推荐）

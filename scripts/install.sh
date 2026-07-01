@@ -10,6 +10,9 @@ MODE="link"
 SCOPE="user"
 TARGETS=()
 WHAT="all"
+SKIP_DEPS="false"
+WITH_ML="false"
+INSTALL_DEPS="true"
 
 usage() {
   cat <<'EOF'
@@ -26,7 +29,11 @@ usage() {
   --what WHAT       skills | commands | slash | all (默认 all)
   --copy            复制而非符号链接
   --unlink          卸载
+  --skip-deps       跳过 Python 虚拟环境与 pip 安装
+  --with-ml         额外安装 requirements-ml.txt（量化/TCN）
   -h, --help        帮助
+
+默认会自动：创建 .venv → pip install -r requirements.txt → 同步 .cursor/mcp.json
 
 示例:
   bash scripts/install.sh --target all
@@ -130,6 +137,92 @@ install_commands() {
   link_dir_entries "$COMMANDS_SRC" "$1" false "command"
 }
 
+find_python3() {
+  if command -v python3 >/dev/null 2>&1; then
+    command -v python3
+    return 0
+  fi
+  if command -v python >/dev/null 2>&1; then
+    command -v python
+    return 0
+  fi
+  echo "未找到 python3，请先安装 Python 3.10+" >&2
+  return 1
+}
+
+ensure_project_venv() {
+  local py="$1"
+  local venv="$ROOT/.venv"
+  if [[ ! -x "$venv/bin/python" ]]; then
+    echo "[python] 创建虚拟环境: $venv"
+    "$py" -m venv "$venv"
+  fi
+  echo "$venv"
+}
+
+install_python_deps() {
+  if [[ "$MODE" == "unlink" || "$SKIP_DEPS" == "true" || "$INSTALL_DEPS" != "true" ]]; then
+    [[ "$SKIP_DEPS" == "true" ]] && echo "[python] 跳过依赖安装 (--skip-deps)"
+    return 0
+  fi
+
+  local py venv pip pyexe
+  py="$(find_python3)"
+  venv="$(ensure_project_venv "$py")"
+  pip="$venv/bin/pip"
+  pyexe="$venv/bin/python"
+
+  echo "[python] 安装依赖: $ROOT/requirements.txt"
+  "$pip" install -q --upgrade pip wheel
+  "$pip" install -q -r "$ROOT/requirements.txt"
+
+  if [[ "$WITH_ML" == "true" && -f "$ROOT/requirements-ml.txt" ]]; then
+    echo "[python] 安装 ML 依赖: $ROOT/requirements-ml.txt"
+    "$pip" install -q -r "$ROOT/requirements-ml.txt"
+  fi
+
+  echo "[python] 依赖就绪: $pyexe"
+  "$pyexe" -c "import browser_cookie3, pysnowball, mcp; print('[python] 校验: browser-cookie3 / pysnowball / mcp OK')" \
+    || echo "[python] 警告: 部分包导入失败，请检查上方 pip 输出" >&2
+}
+
+sync_cursor_mcp_json() {
+  local want_cursor=false
+  local agent
+  for agent in "$@"; do
+    if [[ "$agent" == "cursor" ]]; then
+      want_cursor=true
+      break
+    fi
+  done
+  [[ "$want_cursor" == "true" ]] || return 0
+  [[ "$MODE" == "unlink" ]] && return 0
+  [[ -x "$ROOT/.venv/bin/python" ]] || return 0
+
+  "$ROOT/.venv/bin/python" - "$ROOT" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+mcp_path = root / ".cursor" / "mcp.json"
+pyexe = str(root / ".venv" / "bin" / "python")
+
+data = {}
+if mcp_path.is_file():
+    data = json.loads(mcp_path.read_text(encoding="utf-8"))
+servers = data.setdefault("mcpServers", {})
+servers["eastmoney-stock"] = {
+    "command": pyexe,
+    "args": ["-m", "mcp_server"],
+    "cwd": str(root),
+}
+mcp_path.parent.mkdir(parents=True, exist_ok=True)
+mcp_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+print(f"[mcp] 已同步 {mcp_path} -> {pyexe}")
+PY
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --target) TARGETS+=("${2:-}"); shift 2 ;;
@@ -137,6 +230,8 @@ while [[ $# -gt 0 ]]; do
     --what)   WHAT="${2:-}"; shift 2 ;;
     --copy)   MODE="copy"; shift ;;
     --unlink) MODE="unlink"; shift ;;
+    --skip-deps) SKIP_DEPS="true"; shift ;;
+    --with-ml) WITH_ML="true"; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "未知参数: $1" >&2; usage; exit 1 ;;
   esac
@@ -180,6 +275,10 @@ echo "快捷 Skills: $SLASH_SRC"
 echo "模式: $MODE | 范围: $SCOPE | 组件: $WHAT"
 echo "---"
 
+install_python_deps
+sync_cursor_mcp_json "${expanded[@]}"
+echo "---"
+
 for agent in "${expanded[@]}"; do
   if [[ "$WHAT" == "skills" || "$WHAT" == "all" ]]; then
     dest="$(skills_dest_for "$agent")"
@@ -212,14 +311,15 @@ done
 if [[ "$MODE" == "unlink" ]]; then
   echo "卸载完成。"
 else
-  cat <<'EOF'
+  cat <<EOF
 安装完成。
 
+Python: $ROOT/.venv/bin/python（MCP eastmoney-stock 已指向此环境）
 快捷指令:
   Cursor:      /stock 贵州茅台
   Claude Code: /stock 贵州茅台
-  Codex:       $stock 贵州茅台
+  Codex:       \$stock 贵州茅台
 
-请重启对应工具使配置生效。
+请重启 Cursor 使 MCP / Skills 生效。
 EOF
 fi

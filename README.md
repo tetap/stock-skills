@@ -10,22 +10,32 @@
 
 ## 5 分钟上手
 
-### 0. 克隆并安装 Python 依赖
+### 0. 克隆并安装（Skills + Python 依赖 + MCP 一键完成）
 
 ```bash
 git clone <your-repo-url> skills
 cd skills
 
-python3 -m venv .venv
-source .venv/bin/activate    # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+# 自动：.venv + pip install -r requirements.txt + 同步 .cursor/mcp.json + 安装 Skills
+bash scripts/install.sh --target cursor --scope user
 ```
 
-验证 CLI 是否可用：
+如需量化 ML 依赖（LightGBM / PyTorch）：
 
 ```bash
-python scripts/em.py resolve_symbol --query "600519"
-# 应返回 secid: 1.600519
+bash scripts/install.sh --target cursor --scope user --with-ml
+```
+
+仅链接 Skills、跳过 pip（已装过依赖时）：
+
+```bash
+bash scripts/install.sh --target cursor --scope user --skip-deps
+```
+
+手动验证 CLI：
+
+```bash
+.venv/bin/python scripts/em.py resolve_symbol --query "600519"
 ```
 
 ### 1. 一键安装到 Cursor + Claude Code + Codex（推荐）
