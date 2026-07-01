@@ -5,7 +5,7 @@ from eastmoney.news import get_market_news
 
 
 class TestMarketNews(unittest.TestCase):
-    @patch("eastmoney.news._fetch_flash_news")
+    @patch("eastmoney.news.em_market_flash")
     def test_keyword_filter(self, mock_flash: MagicMock) -> None:
         mock_flash.return_value = [
             {"title": "比亚迪储能签约", "summary": "电池储能项目", "time": "2026-07-01"},

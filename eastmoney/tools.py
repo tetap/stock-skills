@@ -108,6 +108,8 @@ def _run_primary(name: str, **kwargs: Any) -> Any:
             kwargs["code"],
             content_type=kwargs.get("content_type", "news"),
             limit=int(kwargs.get("limit", 10)),
+            source=kwargs.get("source", "all"),
+            stock_name=kwargs.get("stock_name"),
         )
     if name == "get_stock_fund_flow":
         return get_stock_fund_flow(client, kwargs["secid"], limit=int(kwargs.get("limit", 20)))
@@ -142,6 +144,7 @@ def _run_primary(name: str, **kwargs: Any) -> Any:
             news_type=kwargs.get("news_type", "flash"),
             keyword=kwargs.get("keyword"),
             limit=int(kwargs.get("limit", 20)),
+            source=kwargs.get("source", "all"),
         )
     if name == "search_sectors":
         return search_sectors(

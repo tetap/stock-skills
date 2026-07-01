@@ -6,6 +6,7 @@ from typing import Any
 
 from eastmoney.client import EastMoneyClient
 from eastmoney.config import DATACENTER_URL
+from eastmoney.news_sources import em_stock_news, merge_news_rows, sina_stock_news
 
 
 def get_shareholders(client: EastMoneyClient, code: str, *, limit: int = 10) -> list[dict[str, Any]]:
@@ -150,6 +151,39 @@ def get_news_and_reports(
     *,
     content_type: str = "news",
     limit: int = 10,
+    source: str = "all",
+    stock_name: str | None = None,
+) -> list[dict[str, Any]]:
+    """个股新闻/公告/研报。新闻优先走东方财富搜索 API，并可合并新浪筛选结果。"""
+    if content_type == "news":
+        groups: list[list[dict[str, Any]]] = []
+        if source in {"eastmoney", "all"}:
+            groups.append(em_stock_news(client, code, limit=limit))
+        if source in {"sina", "all"}:
+            groups.append(
+                sina_stock_news(client, code, name=stock_name, limit=limit)
+            )
+        rows = merge_news_rows(*groups, limit=limit) if len(groups) > 1 else (groups[0] if groups else [])
+        if rows:
+            return rows
+        # 兼容旧 datacenter（多数已失效）
+        return _get_news_datacenter(client, code, content_type=content_type, limit=limit)
+
+    if content_type in {"announcement", "report"}:
+        rows = _get_news_datacenter(client, code, content_type=content_type, limit=limit)
+        if rows:
+            return rows
+        return []
+
+    return _get_news_datacenter(client, code, content_type=content_type, limit=limit)
+
+
+def _get_news_datacenter(
+    client: EastMoneyClient,
+    code: str,
+    *,
+    content_type: str,
+    limit: int,
 ) -> list[dict[str, Any]]:
     report_map = {
         "news": "RPTA_WEB_NEWS",

@@ -351,11 +351,12 @@ def run_fallback(name: str, **kwargs: Any) -> Any:
             for _, r in df.head(limit).iterrows():
                 rows.append(
                     {
+                        "time": r.get("发布时间"),
                         "title": r.get("新闻标题"),
                         "summary": r.get("新闻内容"),
-                        "date": r.get("发布时间"),
-                        "source": r.get("文章来源"),
+                        "media": r.get("文章来源"),
                         "url": r.get("新闻链接"),
+                        "provider": "akshare_em_search",
                         "_data_source": "akshare",
                     }
                 )
@@ -368,6 +369,20 @@ def run_fallback(name: str, **kwargs: Any) -> Any:
                     {
                         "title": r.get("公告标题"),
                         "date": r.get("公告时间"),
+                        "_data_source": "akshare",
+                    }
+                )
+            return rows
+        if content_type == "report":
+            df = ak_mod.stock_research_report_em(symbol=code)
+            rows = []
+            for _, r in df.head(limit).iterrows():
+                rows.append(
+                    {
+                        "title": r.get("报告名称"),
+                        "date": r.get("日期"),
+                        "source": r.get("机构"),
+                        "rating": r.get("东财评级"),
                         "_data_source": "akshare",
                     }
                 )

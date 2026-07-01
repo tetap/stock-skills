@@ -35,6 +35,7 @@ class EastMoneyClient:
         *,
         cache_key: str | None = None,
         cache_ttl: float = 0,
+        headers: dict[str, str] | None = None,
     ) -> Any:
         if cache_key:
             cached = self._cache.get(cache_key)
@@ -45,11 +46,18 @@ class EastMoneyClient:
         if "eastmoney.com" in url and "ut" not in req_params:
             req_params["ut"] = UT_TOKEN
 
+        req_headers = {**self._session.headers, **(headers or {})}
+
         last_error: Exception | None = None
         for attempt in range(self._max_retries):
             try:
                 self._throttle()
-                resp = self._session.get(url, params=req_params, timeout=15)
+                resp = self._session.get(
+                    url,
+                    params=req_params,
+                    headers=req_headers,
+                    timeout=15,
+                )
                 resp.raise_for_status()
                 data = resp.json()
                 if cache_key and cache_ttl > 0:

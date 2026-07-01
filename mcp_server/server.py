@@ -132,11 +132,21 @@ def get_news_and_reports(
     code: Code,
     content_type: Annotated[str, Field(description="news/announcement/report")] = "news",
     limit: Annotated[int, Field(ge=1, le=30)] = 10,
+    source: Annotated[
+        str, Field(description="eastmoney=东财搜索, sina=新浪筛选, all=合并(默认)")
+    ] = "all",
+    stock_name: Annotated[str, Field(description="股票简称，新浪筛选新闻时使用")] = "",
 ) -> str:
-    """【事件】新闻、公告、研报。"""
-    return _dump(
-        run_tool("get_news_and_reports", code=code, content_type=content_type, limit=limit)
-    )
+    """【舆情】个股新闻/公告/研报。新闻已改用东财搜索 API，可合并新浪 7×24。"""
+    kwargs: dict[str, Any] = {
+        "code": code,
+        "content_type": content_type,
+        "limit": limit,
+        "source": source,
+    }
+    if stock_name:
+        kwargs["stock_name"] = stock_name
+    return _dump(run_tool("get_news_and_reports", **kwargs))
 
 
 @mcp.tool()
@@ -205,13 +215,17 @@ def compare_performance(
 @mcp.tool()
 def get_market_news(
     news_type: Annotated[
-        str, Field(description="flash=7×24快讯, headline=要闻, breakfast=财经早餐")
+        str,
+        Field(description="flash/headline/breakfast/sina_roll/sina_live"),
     ] = "flash",
     keyword: Annotated[str, Field(description="标题/摘要关键词过滤，如 电池、半导体")] = "",
     limit: Annotated[int, Field(ge=1, le=50)] = 20,
+    source: Annotated[
+        str, Field(description="eastmoney/sina/all，flash 默认 all 合并东财+新浪")
+    ] = "all",
 ) -> str:
-    """【舆情】市场快讯/要闻/财经早餐，抓热点与情绪面。"""
-    kwargs: dict[str, Any] = {"news_type": news_type, "limit": limit}
+    """【舆情】市场快讯/要闻；默认合并东方财富 7×24 与新浪直播/滚动。"""
+    kwargs: dict[str, Any] = {"news_type": news_type, "limit": limit, "source": source}
     if keyword:
         kwargs["keyword"] = keyword
     return _dump(run_tool("get_market_news", **kwargs))

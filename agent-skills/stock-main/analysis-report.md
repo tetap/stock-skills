@@ -54,11 +54,10 @@
 | 工具 | 参数 |
 |------|------|
 | `get_major_events` | code, limit 15 |
-| `get_news_and_reports` | code, news, limit 10 |
+| `get_news_and_reports` | code, news, limit 10, **source=all** |
 | `get_news_and_reports` | code, announcement, limit 5 |
-| `get_news_and_reports` | code, report, limit 3 |
-| `get_market_news` | flash, limit 20（看大盘/行业热点） |
-| `get_market_news` | flash, keyword=行业或公司关键词, limit 10 |
+| `get_market_news` | flash, limit 20, **source=all**（东财+新浪） |
+| `get_market_news` | flash, keyword=行业词, limit 10 |
 | `get_sector_detail` | 从 profile 行业名, members 或 fund_flow |
 | `get_dragon_tiger` | code, limit 5（有则写，无则跳过） |
 

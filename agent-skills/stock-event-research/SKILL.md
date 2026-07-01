@@ -18,17 +18,27 @@ description: >-
 ## 市场热点与情绪（必会）
 
 ```bash
-python scripts/em.py get_market_news --news-type flash --limit 30
+# 默认合并东财 7×24 + 新浪直播/滚动
+python scripts/em.py get_market_news --news-type flash --limit 30 --source all
 python scripts/em.py get_market_news --news-type flash --keyword 电池 --limit 15
-python scripts/em.py get_market_news --news-type headline --limit 15
-python scripts/em.py get_market_news --news-type breakfast --limit 3
+python scripts/em.py get_market_news --news-type sina_live --limit 20 --source sina
+python scripts/em.py get_market_news --news-type headline --limit 15 --source eastmoney
 ```
 
-| news_type | 含义 |
-|-----------|------|
-| flash | 7×24 快讯（抓热点首选） |
-| headline | 财经要闻 |
-| breakfast | 东方财富财经早餐 |
+## 个股新闻（必会）
+
+```bash
+# 东财搜索 API（替代已下线的 datacenter 新闻报表）+ 可选新浪补充
+python scripts/em.py get_news_and_reports --code 002074 --content-type news --limit 10 --source all --stock-name 国轩高科
+python scripts/em.py get_news_and_reports --code 002074 --content-type news --source eastmoney
+python scripts/em.py get_news_and_reports --code 002074 --content-type announcement --limit 5
+```
+
+| 参数 | 含义 |
+|------|------|
+| `--source all` | 东财 + 新浪（默认） |
+| `--source eastmoney` | 仅东财资讯搜索 / 7×24 |
+| `--source sina` | 仅新浪 7×24 / 滚动（个股需 `--stock-name`） |
 
 分析个股或板块时，**务必**拉快讯并用 keyword 过滤相关行业词。
 
