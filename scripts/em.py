@@ -41,6 +41,22 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
         choices=["missing_token", "auth_failed", "blocked"],
         help="get_xueqiu_auth_guide 失败原因类型",
     )
+    parser.add_argument(
+        "--seq-len",
+        type=int,
+        default=None,
+        help="Alpha360 时间步长度，默认 60",
+    )
+    parser.add_argument(
+        "--include-tensor",
+        action="store_true",
+        help="get_alpha360_tensor 返回完整 6×60 矩阵",
+    )
+    parser.add_argument(
+        "--include-all-factors",
+        action="store_true",
+        help="get_alpha158_factors 返回全部 158+ 因子",
+    )
 
 
 def main() -> int:
@@ -76,6 +92,9 @@ def main() -> int:
             "source": args.source,
             "stock_name": args.stock_name,
             "reason": args.reason,
+            "seq_len": args.seq_len,
+            "include_tensor": args.include_tensor or None,
+            "include_all_factors": args.include_all_factors or None,
         }.items()
         if v is not None
     }

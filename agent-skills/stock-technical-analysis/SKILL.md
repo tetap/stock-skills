@@ -12,7 +12,20 @@ description: >-
 2. `get_kline --secid {secid} --period daily --adjust qfq --limit 120`
 3. `get_realtime_quote --secid {secid}`
 4. 可选：`get_historical_series --secid {secid} --indicators ma --limit 120`
-5. 可选：`get_stock_fund_flow --secid {secid} --limit 10`（量价背离）
+5. 可选：`get_alpha158_score` + `get_alpha360_score`（表格因子 + 时序序列，交叉验证）
+6. 可选：`get_stock_fund_flow --secid {secid} --limit 10`（量价背离）
+
+## Alpha360 时序输入
+
+```bash
+python scripts/em.py get_alpha360_tensor --secid 0.002074
+python scripts/em.py get_alpha360_score --secid 0.002074
+python scripts/em.py get_alpha360_tensor --secid 0.002074 --include-tensor
+```
+
+- `tensor_rnn` (60,6)：LSTM / Transformer
+- `tensor_conv` (6,60)：TCN
+- 默认只返回 `sequence_summary`（通道形态、斜率），避免 JSON 过大
 
 ## 输出模板
 

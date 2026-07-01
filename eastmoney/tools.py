@@ -5,6 +5,9 @@ from __future__ import annotations
 import os
 from typing import Any
 
+from eastmoney.alpha158 import get_alpha158_factors, get_alpha158_score
+from eastmoney.alpha360 import get_alpha360_tensor
+from eastmoney.alpha360_infer import get_alpha360_score
 from eastmoney.chip import get_chip_distribution
 from eastmoney.client import EastMoneyClient
 from eastmoney.events import (
@@ -190,6 +193,52 @@ def _run_primary(name: str, **kwargs: Any) -> Any:
         return get_limit_up_history(client, kwargs["code"], limit=int(kwargs.get("limit", 10)))
     if name == "get_xueqiu_auth_guide":
         return xueqiu_auth_guide(reason=kwargs.get("reason", "missing_token"))
+    if name == "get_alpha360_tensor":
+        include_tensor = kwargs.get("include_tensor", False)
+        if isinstance(include_tensor, str):
+            include_tensor = include_tensor.lower() in {"1", "true", "yes"}
+        return get_alpha360_tensor(
+            client,
+            kwargs["secid"],
+            seq_len=int(kwargs.get("seq_len", 60)),
+            period=kwargs.get("period", "daily"),
+            adjust=kwargs.get("adjust", "qfq"),
+            include_tensor=bool(include_tensor),
+        )
+    if name == "get_alpha360_score":
+        include_tensor = kwargs.get("include_tensor", False)
+        if isinstance(include_tensor, str):
+            include_tensor = include_tensor.lower() in {"1", "true", "yes"}
+        return get_alpha360_score(
+            client,
+            kwargs["secid"],
+            seq_len=int(kwargs.get("seq_len", 60)),
+            period=kwargs.get("period", "daily"),
+            adjust=kwargs.get("adjust", "qfq"),
+            include_tensor=bool(include_tensor),
+        )
+    if name == "get_alpha158_factors":
+        include_all = kwargs.get("include_all_factors", False)
+        if isinstance(include_all, str):
+            include_all = include_all.lower() in {"1", "true", "yes"}
+        return get_alpha158_factors(
+            client,
+            kwargs["secid"],
+            period=kwargs.get("period", "daily"),
+            adjust=kwargs.get("adjust", "qfq"),
+            include_all_factors=bool(include_all),
+        )
+    if name == "get_alpha158_score":
+        include_all = kwargs.get("include_all_factors", False)
+        if isinstance(include_all, str):
+            include_all = include_all.lower() in {"1", "true", "yes"}
+        return get_alpha158_score(
+            client,
+            kwargs["secid"],
+            period=kwargs.get("period", "daily"),
+            adjust=kwargs.get("adjust", "qfq"),
+            include_all_factors=bool(include_all),
+        )
 
     raise ValueError(f"未知工具: {name}")
 
@@ -265,4 +314,8 @@ TOOL_NAMES = [
     "get_short_term_monitor",
     "get_limit_up_history",
     "get_xueqiu_auth_guide",
+    "get_alpha360_tensor",
+    "get_alpha360_score",
+    "get_alpha158_factors",
+    "get_alpha158_score",
 ]

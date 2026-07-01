@@ -331,6 +331,89 @@ def get_xueqiu_auth_guide(
     return _dump(run_tool("get_xueqiu_auth_guide", reason=reason))
 
 
+@mcp.tool()
+def get_alpha360_tensor(
+    secid: Secid,
+    seq_len: Annotated[int, Field(ge=20, le=120, description="时间步长度，默认 60")] = 60,
+    include_tensor: Annotated[
+        bool,
+        Field(description="是否返回完整 6×60 矩阵；默认 false 仅摘要"),
+    ] = False,
+    period: str = "daily",
+    adjust: str = "qfq",
+) -> str:
+    """【量化】Alpha360 价量张量：6 通道 × seq_len 时间步，供 TCN/LSTM/Transformer 时序模型。"""
+    return _dump(
+        run_tool(
+            "get_alpha360_tensor",
+            secid=secid,
+            seq_len=seq_len,
+            include_tensor=include_tensor,
+            period=period,
+            adjust=adjust,
+        )
+    )
+
+
+@mcp.tool()
+def get_alpha360_score(
+    secid: Secid,
+    seq_len: Annotated[int, Field(ge=20, le=120)] = 60,
+    include_tensor: Annotated[bool, Field(description="是否附带完整矩阵")] = False,
+    period: str = "daily",
+    adjust: str = "qfq",
+) -> str:
+    """【量化】Alpha360 序列打分：6×60 价量形态 + 启发式分（可选 TCN 权重）。"""
+    return _dump(
+        run_tool(
+            "get_alpha360_score",
+            secid=secid,
+            seq_len=seq_len,
+            include_tensor=include_tensor,
+            period=period,
+            adjust=adjust,
+        )
+    )
+
+
+@mcp.tool()
+def get_alpha158_factors(
+    secid: Secid,
+    include_all_factors: Annotated[bool, Field(description="返回全部因子；默认仅 highlights+summary")] = False,
+    period: str = "daily",
+    adjust: str = "qfq",
+) -> str:
+    """【量化】Alpha158 表格因子（158 维价量特征），供 LightGBM 等模型。"""
+    return _dump(
+        run_tool(
+            "get_alpha158_factors",
+            secid=secid,
+            include_all_factors=include_all_factors,
+            period=period,
+            adjust=adjust,
+        )
+    )
+
+
+@mcp.tool()
+def get_alpha158_score(
+    secid: Secid,
+    include_all_factors: Annotated[bool, Field(description="是否附带全部因子")] = False,
+    period: str = "daily",
+    adjust: str = "qfq",
+) -> str:
+    """【量化】Alpha158 因子综合分 + 摘要（表格侧，与 Alpha360 序列分互补）。"""
+    return _dump(
+        run_tool(
+            "get_alpha158_score",
+            secid=secid,
+            include_all_factors=include_all_factors,
+            period=period,
+            adjust=adjust,
+        )
+    )
+
+
 def main() -> None:
     mcp.run(transport="stdio")
 

@@ -21,7 +21,7 @@ python scripts/em.py get_realtime_quote --secid 1.600519
 
 ## MCP（推荐）
 
-项目已包含 `.cursor/mcp.json`，在 Cursor 设置中启用 MCP 后，模型可直接调用 `eastmoney-stock` 下的 29 个工具。
+项目已包含 `.cursor/mcp.json`，在 Cursor 设置中启用 MCP 后，模型可直接调用 `eastmoney-stock` 下的 **33 个工具**。
 
 重启 Cursor 或刷新 MCP 后生效。MCP 命令：
 
@@ -29,6 +29,26 @@ python scripts/em.py get_realtime_quote --secid 1.600519
 source .venv/bin/activate
 python -m mcp_server
 ```
+
+## Alpha360 / Alpha158 量化特征
+
+| 数据集 | 结构 | 典型模型 |
+|--------|------|----------|
+| **Alpha360** | 6 通道 × 60 时间步 | TCN / LSTM / Transformer |
+| **Alpha158** | 158 维表格因子 | LightGBM / Linear / TabNet |
+
+```bash
+# Alpha158 表格因子（默认 highlights + 因子分）
+python scripts/em.py get_alpha158_factors --secid 0.002074
+python scripts/em.py get_alpha158_score --secid 0.002074
+python scripts/em.py get_alpha158_factors --secid 0.002074 --include-all-factors
+
+# Alpha360 时序张量
+python scripts/em.py get_alpha360_tensor --secid 0.002074
+python scripts/em.py get_alpha360_score --secid 0.002074
+```
+
+分析时建议 **158 表格分 + 360 序列分** 交叉验证。
 
 ## AkShare 降级
 
@@ -90,7 +110,7 @@ bash scripts/test.sh
 - 深交所/北交所：`0.{6位代码}`（如 `0.000001`）
 - 不确定时先调 `resolve_symbol`
 
-## 29 个工具
+## 33 个工具
 
 | 工具 | 主要参数 |
 |------|----------|
@@ -121,6 +141,11 @@ bash scripts/test.sh
 | get_limit_up_gene | --secid, --code |
 | get_short_term_monitor | --code |
 | get_limit_up_history | --code, --limit |
+| get_xueqiu_auth_guide | --reason |
+| get_alpha360_tensor | --secid, --seq-len, --include-tensor |
+| get_alpha360_score | --secid |
+| get_alpha158_factors | --secid, --include-all-factors |
+| get_alpha158_score | --secid |
 
 ## 限流与缓存
 
