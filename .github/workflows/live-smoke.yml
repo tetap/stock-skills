@@ -24,4 +24,6 @@ jobs:
           .venv/bin/pip install -q -r requirements.lock
 
       - name: Live API smoke
+        env:
+          XUEQIU_TOKEN: ${{ secrets.XUEQIU_TOKEN }}
         run: bash scripts/smoke_live.sh

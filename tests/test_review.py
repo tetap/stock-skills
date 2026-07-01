@@ -20,6 +20,13 @@ class TestReviewProtocol(unittest.TestCase):
     def test_run_tool_review(self) -> None:
         result = run_tool("get_review_protocol", flow="C")
         self.assertEqual(result["flow"], "C")
+        self.assertIn("search_sectors", result["required_tools"])
+
+    def test_flow_d_required_tools(self) -> None:
+        proto = get_review_protocol(flow="D")
+        self.assertEqual(proto["min_tool_calls"], 8)
+        self.assertIn("get_market_snapshot", proto["required_tools"])
+        self.assertIn("get_market_news", proto["required_tools"])
 
 
 class TestFormatToolResult(unittest.TestCase):

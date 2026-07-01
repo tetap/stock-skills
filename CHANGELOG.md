@@ -4,6 +4,18 @@
 
 ## [Unreleased]
 
+### 新增
+
+- **`docs/xueqiu-auth.md`**：雪球 Cookie 授权 E2E 与 Agent 暂停流程
+- **`models/optional/`**：OOS 通过权重的 opt-in 目录说明
+- Windows CI：`test.yml` 增加 `windows-latest` + `check.ps1`
+- Live smoke：板块 `search_sectors`、C 流程 protocol、`xueqiu_hot`；`XUEQIU_TOKEN` 可选测 livenews
+
+### 变更
+
+- `get_review_protocol(flow=C|D)` 返回 `required_tools` 清单
+- 板块 `search_sectors` 单测回归（空 query、类型过滤、打分、跨类型）
+
 ## [0.1.1] - 2026-07-01
 
 ### 新增

@@ -10,14 +10,22 @@ Release 说明自动化、live smoke 扩展、OOS 门槛校验、`check.ps1`、K
 
 ---
 
-## v0.2.0（下一 minor，草案）
+## v0.2.0（进行中）
 
-| 项 | 说明 |
+| 项 | 状态 |
 |----|------|
-| **OOS 通过的可选模型** | 独立 artifact 或 opt-in 下载，默认仍用当前演示权重 + `oos_warning` |
-| **板块/热点** | 强化 C/D 流程工具组合与 sector 模糊搜索回归 |
-| **雪球** | 授权流程 E2E 文档；live smoke 在 token 可用时可选跑 xueqiu |
-| **Windows CI** | `install.ps1` / `check.ps1` 纳入 GitHub Actions matrix |
+| **OOS 通过的可选模型** | 🟡 `models/optional/` + `ALPHA158_OPT_IN` 文档；Release artifact 待训出 |
+| **板块/热点** | 🟢 C/D `required_tools`；`search_sectors` 回归单测 |
+| **雪球** | 🟢 [docs/xueqiu-auth.md](docs/xueqiu-auth.md)；live smoke + 可选 `XUEQIU_TOKEN` |
+| **Windows CI** | 🟢 `test.yml` → `windows-latest` + `check.ps1` |
+
+---
+
+## v0.3.0（草案）
+
+- OOS 模型 GitHub Release 资产 + `ensure_demo_models` opt-in 下载
+- 板块 C 流程 E2E live 冒烟
+- Windows `install.ps1` 纳入 CI
 
 ---
 

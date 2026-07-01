@@ -31,6 +31,8 @@ PR 与 Issue 模板：`.github/pull_request_template.md`、`.github/ISSUE_TEMPLA
 
 安全漏洞：见 [SECURITY.md](SECURITY.md)（勿在公开 Issue 粘贴 Cookie/Token）。
 
+雪球登录与 Agent 暂停流程：见 [docs/xueqiu-auth.md](docs/xueqiu-auth.md)。
+
 ---
 
 ## 常见改动 checklist

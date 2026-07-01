@@ -29,6 +29,10 @@ GOVERNANCE_DOCS = (
     ROOT / "ROADMAP.md",
 )
 
+GUIDE_DOCS = (
+    ROOT / "docs" / "xueqiu-auth.md",
+)
+
 RELEASE_NOTES_SCRIPT = ROOT / "scripts" / "release_notes.sh"
 
 
@@ -46,6 +50,10 @@ class TestProjectGovernance(unittest.TestCase):
 
     def test_governance_docs_present(self) -> None:
         for path in GOVERNANCE_DOCS:
+            self.assertTrue(path.is_file(), str(path.relative_to(ROOT)))
+
+    def test_guide_docs_present(self) -> None:
+        for path in GUIDE_DOCS:
             self.assertTrue(path.is_file(), str(path.relative_to(ROOT)))
 
     def test_release_notes_extracts_version(self) -> None:

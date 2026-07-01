@@ -52,6 +52,8 @@ bash scripts/ensure_demo_models.sh
 
 正式研发见 `agent-skills/stock-quant-research/SKILL.md`（网格搜参 + OOS 验收）。
 
+可选 OOS 通过权重（opt-in）：见 [optional/README.md](optional/README.md)。
+
 ## 环境变量
 
 - `ALPHA158_MODEL_PATH` → 自定义 LightGBM 模型路径

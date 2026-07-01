@@ -67,8 +67,16 @@ def get_review_protocol(*, flow: str = "B") -> dict[str, Any]:
         ]
     elif flow == "C":
         base["min_tool_calls"] = GATES["min_tool_calls_c"]
+        base["required_tools"] = [
+            "search_sectors",
+            "get_sector_detail",
+            "get_sector_overview",
+            "get_market_news",
+            "get_market_fund_flow",
+            "get_fund_flow_rank",
+        ]
         base["rounds"] = [
-            {"id": "R0", "name": "板块数据", "required": ["工具≥12"]},
+            {"id": "R0", "name": "板块数据", "required": ["工具≥12", "含 search_sectors + 板块 kline/资金/成分"]},
             {"id": "R2", "name": "数据审计"},
             {"id": "R3", "name": "选股质疑"},
             {"id": "R4", "name": "板块-个股一致性"},
@@ -76,8 +84,15 @@ def get_review_protocol(*, flow: str = "B") -> dict[str, Any]:
         ]
     else:
         base["min_tool_calls"] = 8
+        base["required_tools"] = [
+            "get_market_news",
+            "get_sector_overview",
+            "get_market_fund_flow",
+            "get_fund_flow_rank",
+            "get_market_snapshot",
+        ]
         base["rounds"] = [
-            {"id": "R0", "name": "快讯+板块+资金"},
+            {"id": "R0", "name": "快讯+板块+资金", "required": ["flash/headline/xueqiu_hot", "概念+行业 overview"]},
             {"id": "R3", "name": "热点持续性"},
             {"id": "R4", "name": "新闻-板块-资金交叉"},
             {"id": "R6", "name": "门禁", "output_section": "§7 审核纪要"},

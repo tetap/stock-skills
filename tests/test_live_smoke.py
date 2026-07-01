@@ -60,6 +60,48 @@ class TestLiveSmoke(unittest.TestCase):
         self.assertIsInstance(result, dict)
         self.assertEqual(result.get("code"), "600519")
 
+    def test_search_sectors_live(self) -> None:
+        rows = run_tool("search_sectors", query="银行", limit=5)
+        self.assertIsInstance(rows, list)
+        self.assertGreater(len(rows), 0)
+        self.assertIn("name", rows[0])
+        self.assertIn("match_score", rows[0])
+
+    def test_review_protocol_c(self) -> None:
+        proto = run_tool("get_review_protocol", flow="C")
+        self.assertEqual(proto["flow"], "C")
+        self.assertIn("search_sectors", proto["required_tools"])
+
+    def test_xueqiu_hot_no_auth(self) -> None:
+        rows = run_tool(
+            "get_market_news",
+            news_type="xueqiu_hot",
+            source="xueqiu",
+            limit=5,
+        )
+        self.assertIsInstance(rows, list)
+        self.assertGreater(len(rows), 0)
+
+
+XUEQIU_TOKEN = os.getenv("XUEQIU_TOKEN", "").strip()
+
+
+@unittest.skipUnless(LIVE and XUEQIU_TOKEN, "需要 LIVE=1 且 XUEQIU_TOKEN")
+class TestLiveXueqiuAuth(unittest.TestCase):
+    def test_xueqiu_auth_status(self) -> None:
+        status = run_tool("get_xueqiu_auth_status")
+        self.assertTrue(status.get("authenticated"))
+
+    def test_xueqiu_livenews(self) -> None:
+        rows = run_tool(
+            "get_market_news",
+            news_type="xueqiu_livenews",
+            source="xueqiu",
+            limit=5,
+        )
+        self.assertIsInstance(rows, list)
+        self.assertGreater(len(rows), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

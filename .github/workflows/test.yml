@@ -27,3 +27,23 @@ jobs:
 
       - name: MCP module smoke
         run: .venv/bin/python -c "import mcp_server.server as s; print('mcp tools ok')"
+
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          .\.venv\Scripts\pip install -q --upgrade pip wheel
+          .\.venv\Scripts\pip install -q -r requirements.lock
+
+      - name: Run check.ps1
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File scripts/check.ps1
