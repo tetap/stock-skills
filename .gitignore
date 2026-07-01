@@ -12,3 +12,6 @@ __pycache__/
 .claude/skills/
 .codex/skills/
 .agents/skills/
+
+# GitHub Pages 构建产物
+docs/_site/

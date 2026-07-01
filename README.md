@@ -5,11 +5,12 @@
 **东方财富 A 股数据 × Agent Skills × `/stock` 一键分析**
 
 [![test](https://github.com/tetap/stock-skills/actions/workflows/test.yml/badge.svg)](https://github.com/tetap/stock-skills/actions/workflows/test.yml)
+[![docs](https://github.com/tetap/stock-skills/actions/workflows/pages.yml/badge.svg)](https://tetap.github.io/stock-skills/)
 [![release](https://img.shields.io/github/v/release/tetap/stock-skills?label=release)](https://github.com/tetap/stock-skills/releases)
 [![license](https://img.shields.io/github/license/tetap/stock-skills)](LICENSE)
 [![python](https://img.shields.io/badge/python-3.12+-blue.svg)](requirements.txt)
 
-[快速开始](#-快速开始) · [安装](#-安装) · [用法](#-用法) · [架构](#-架构) · [文档](#-文档)
+[快速开始](#-快速开始) · [安装](#-安装) · [用法](#-用法) · [架构](#-架构) · [文档站](https://tetap.github.io/stock-skills/) · [文档](#-文档)
 
 <img src="docs/assets/banner.png" alt="stock-skills：东方财富 A 股数据与 Agent 分析" width="100%" />
 
@@ -266,6 +267,7 @@ python scripts/em.py get_review_protocol --flow B
 
 | 文档 | 内容 |
 |------|------|
+| **[文档站（GitHub Pages）](https://tetap.github.io/stock-skills/)** | 安装、用法、CLI、在线浏览 |
 | [AGENTS.md](AGENTS.md) | Agent 架构、命令路由、开发约定 |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 贡献、测试、发布流程 |
 | [docs/xueqiu-auth.md](docs/xueqiu-auth.md) | 雪球 Cookie 授权 E2E |

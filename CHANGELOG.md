@@ -6,6 +6,7 @@
 
 ### 新增
 
+- **GitHub Pages 文档站**：`scripts/build_pages.py` + `.github/workflows/pages.yml` → https://tetap.github.io/stock-skills/
 - **`docs/xueqiu-auth.md`**：雪球 Cookie 授权 E2E 与 Agent 暂停流程
 - **`models/optional/`**：OOS 通过权重的 opt-in 目录说明
 - Windows CI：`test.yml` 增加 `windows-latest` + `check.ps1`
