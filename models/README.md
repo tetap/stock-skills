@@ -21,7 +21,20 @@ python scripts/train_quant_models.py --lgb --secids 0.002074,1.600519,0.300204
 | 文件 | 说明 |
 |------|------|
 | `alpha158_lgb.txt` | 演示 LGB 权重（勿用于实盘定调） |
-| `alpha158_lgb.metrics.json` | OOS IC≤0 时 `get_quant_technical` 会提示评级上限 |
+| `alpha158_lgb.metrics.json` | OOS 指标；`get_quant_technical` 读取 `oos_status` |
+
+### OOS 最低门槛（演示 / 研发共用）
+
+| 指标 | 门槛 | 说明 |
+|------|------|------|
+| 样本外 IC | **> 0** | 来自 `best.out_of_sample.ic` |
+| 方向准确率 | **> 50%** | `direction_accuracy` |
+
+未同时满足时 `oos_passed=false`，分析报告评级上限「右侧等待」。校验：
+
+```bash
+python scripts/validate_demo_metrics.py
+```
 
 重新训练（需网络）：
 

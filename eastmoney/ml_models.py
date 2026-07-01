@@ -63,6 +63,27 @@ def try_lgb158_score(
     }
 
 
+def evaluate_oos_metrics(oos: dict[str, Any]) -> dict[str, Any]:
+    """样本外最低门槛：IC > 0 且 direction_accuracy > 50%（与 stock-quant-research 一致）。"""
+    ic = float(oos.get("ic") or 0)
+    dir_acc = float(oos.get("direction_accuracy") or 0)
+    passed = ic > 0 and dir_acc > 0.5
+    return {
+        "passed": passed,
+        "ic": ic,
+        "direction_accuracy": dir_acc,
+        "threshold": {
+            "ic_min_exclusive": 0.0,
+            "direction_accuracy_min_exclusive": 0.5,
+        },
+        "summary": (
+            "OOS 通过"
+            if passed
+            else f"OOS 未通过（IC={ic:.4f}≤0 或 dir_acc={dir_acc:.2%}≤50%）"
+        ),
+    }
+
+
 def load_lgb_oos_status(*, model_path: str | Path | None = None) -> dict[str, Any]:
     """读取 LightGBM 训练产出的 OOS 指标（alpha158_lgb.metrics.json）。"""
     path = Path(model_path or os.getenv("ALPHA158_MODEL_PATH", DEFAULT_LGB_PATH))
@@ -99,9 +120,8 @@ def load_lgb_oos_status(*, model_path: str | Path | None = None) -> dict[str, An
         }
 
     oos = (data.get("best") or {}).get("out_of_sample") or {}
-    ic = float(oos.get("ic") or 0)
-    dir_acc = float(oos.get("direction_accuracy") or 0)
-    passed = ic > 0 and dir_acc > 0.5
+    gate = evaluate_oos_metrics(oos)
+    passed = gate["passed"]
     return {
         **base,
         "available": True,

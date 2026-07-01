@@ -19,6 +19,13 @@ sys.path.insert(0, str(ROOT))
 MODEL_DIR = ROOT / "models"
 DEFAULT_SECIDS = ["0.002074", "1.600519", "0.300204", "0.000001"]
 
+
+def _repo_relative(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(ROOT.resolve()).as_posix()
+    except ValueError:
+        return str(path)
+
 LGB_PARAM_GRID = [
     {"learning_rate": 0.05, "num_leaves": 31, "num_boost_round": 80},
     {"learning_rate": 0.03, "num_leaves": 15, "num_boost_round": 120},
@@ -95,7 +102,7 @@ def train_lgb(
     best_booster.save_model(str(out))
 
     payload = {
-        "model": str(out),
+        "model": _repo_relative(out),
         "train_ratio": train_ratio,
         "sample_count": len(samples),
         "train_count": len(train_samples),
@@ -108,13 +115,17 @@ def train_lgb(
     metrics_path = metrics_out or out.with_suffix(".metrics.json")
     save_metrics(str(metrics_path), payload)
 
+    from eastmoney.ml_models import evaluate_oos_metrics
+
     print(f"LightGBM 已保存: {out}")
     print(f"样本: 总 {len(samples)} | 内 {len(train_samples)} | 外 {len(test_samples)}")
     print(f"IS  IC={best_row['in_sample']['ic']}  dir_acc={best_row['in_sample']['direction_accuracy']}")
     print(f"OOS IC={best_row['out_of_sample']['ic']}  dir_acc={best_row['out_of_sample']['direction_accuracy']}")
     print(f"指标 JSON: {metrics_path}")
-    if best_row["out_of_sample"]["ic"] <= 0:
-        print("⚠ OOS IC≤0：该模型尚未通过样本外检验，勿用于报告定调。")
+    gate = evaluate_oos_metrics(best_row["out_of_sample"])
+    print(gate["summary"])
+    if not gate["passed"]:
+        print("⚠ 该模型尚未通过样本外检验，勿用于报告定调。")
 
 
 def init_tcn(out: Path) -> None:

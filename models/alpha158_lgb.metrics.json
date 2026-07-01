@@ -1,5 +1,5 @@
 {
-  "model": "/Users/zhengyicai/project/skills/models/alpha158_lgb.txt",
+  "model": "models/alpha158_lgb.txt",
   "train_ratio": 0.8,
   "sample_count": 270,
   "train_count": 216,

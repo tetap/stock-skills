@@ -468,7 +468,7 @@ export EASTMONEY_DISABLE_FALLBACK=1   # 禁用降级
 ## 测试
 
 ```bash
-# 单元测试（默认，CI 同款，92 项）
+# 单元测试（默认，CI 同款，98 项）
 bash scripts/test.sh
 
 # 发布前完整检查（测试 + MCP parity）

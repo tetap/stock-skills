@@ -14,6 +14,8 @@ bash scripts/install.sh --target cursor --scope user
 
 Windows：`powershell -ExecutionPolicy Bypass -File scripts/install.ps1`
 
+发布前检查（Windows）：`powershell -ExecutionPolicy Bypass -File scripts/check.ps1`
+
 ---
 
 ## 提交前检查
@@ -56,6 +58,7 @@ PR 与 Issue 模板：`.github/pull_request_template.md`、`.github/ISSUE_TEMPLA
 ### 量化模型
 
 - 演示权重：`bash scripts/train_demo_model.sh` 或 `ensure_demo_models.sh`
+- 校验 OOS metrics：`python scripts/validate_demo_metrics.py`
 - 勿将未通过 OOS 的模型当作「可定调策略」宣传；metrics 一并提交
 
 ---

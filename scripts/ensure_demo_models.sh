@@ -13,6 +13,9 @@ BASE="https://raw.githubusercontent.com/${REPO}/${BRANCH}/models"
 
 if [[ -f "$MODEL" && -f "$METRICS" ]]; then
   echo "[models] 演示权重已存在: $MODEL"
+  if [[ -x .venv/bin/python ]]; then
+    .venv/bin/python scripts/validate_demo_metrics.py
+  fi
   exit 0
 fi
 
@@ -34,6 +37,9 @@ download() {
 
 if download "alpha158_lgb.txt" && download "alpha158_lgb.metrics.json"; then
   echo "[models] 已从 GitHub 拉取演示权重"
+  if [[ -x .venv/bin/python ]]; then
+    .venv/bin/python scripts/validate_demo_metrics.py
+  fi
   exit 0
 fi
 

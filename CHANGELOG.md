@@ -4,11 +4,24 @@
 
 ## [Unreleased]
 
-### 计划
+## [0.1.1] - 2026-07-01
 
-- Release 正文从 CHANGELOG 自动提取（见 `scripts/release_notes.sh`）
-- 扩展 live smoke（K 线、公司概况）
-- v0.1.1 文档与量化演示流程对齐
+### 新增
+
+- **`scripts/release_notes.sh`**：Release 正文从 CHANGELOG 自动提取
+- **`scripts/validate_demo_metrics.py`**：演示 LGB metrics 路径与 OOS 门槛校验
+- **`scripts/check.ps1`**：Windows 发布前检查（单测 + MCP parity）
+- **`ROADMAP.md`**：v0.1.1 / v0.2.0 计划
+- Live smoke：`get_kline`、`get_company_profile`
+
+### 变更
+
+- `release.yml` 使用 CHANGELOG 正文，不再 `generate_release_notes`
+- `get_kline` 工具走 `get_kline_resilient`（东财失败时 AkShare 降级）
+- `alpha158_lgb.metrics.json` 的 `model` 改为仓库相对路径
+- `train_demo_model.sh` / `ensure_demo_models.sh` 训练或拉取后自动校验 metrics
+- `evaluate_oos_metrics()` 统一 OOS 门槛（IC>0 且 direction_accuracy>50%）
+- README / CONTRIBUTING 发布流程与测试计数对齐
 
 ## [0.1.0] - 2026-07-01
 
@@ -35,4 +48,5 @@
 - 演示模型 **OOS 未通过**，`quant_verdict` 仅研究辅助
 - 数据仅供参考，不构成投资建议
 
+[0.1.1]: https://github.com/tetap/stock-skills/releases/tag/v0.1.1
 [0.1.0]: https://github.com/tetap/stock-skills/releases/tag/v0.1.0

@@ -22,7 +22,7 @@ from eastmoney.fallback import run_fallback
 from eastmoney.financial import get_company_profile, get_financial_statements, get_valuation_metrics
 from eastmoney.fund_flow import get_fund_flow_rank, get_market_fund_flow, get_stock_fund_flow
 from eastmoney.historical import compare_performance, get_historical_series
-from eastmoney.kline import get_kline
+from eastmoney.kline import get_kline_resilient
 from eastmoney.news import get_market_news
 from eastmoney.quote import get_market_snapshot, get_realtime_quote
 from eastmoney.quant import get_quant_technical
@@ -78,7 +78,7 @@ def _run_primary(name: str, **kwargs: Any) -> Any:
     if name == "get_realtime_quote":
         return get_realtime_quote(client, kwargs["secid"])
     if name == "get_kline":
-        return get_kline(
+        return get_kline_resilient(
             client,
             kwargs["secid"],
             period=kwargs.get("period", "daily"),
