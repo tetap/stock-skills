@@ -10,11 +10,26 @@ if [[ ! -x .venv/bin/pip ]]; then
 fi
 
 PKGS=(requests pandas akshare curl_cffi mcp pysnowball browser-cookie3)
-LOCK="$ROOT/requirements.lock"
+ML=false
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --ml) ML=true; shift ;;
+    *) echo "未知参数: $1" >&2; exit 1 ;;
+  esac
+done
+
+if [[ "$ML" == "true" ]]; then
+  PKGS=(lightgbm numpy torch)
+  LOCK="$ROOT/requirements-ml.lock"
+  HEADER="# ML 依赖锁定（可选，配合 --with-ml）"
+else
+  LOCK="$ROOT/requirements.lock"
+  HEADER="# 锁定主依赖版本（可复现安装）"
+fi
+
 {
-  echo "# 锁定主依赖版本（可复现安装）"
-  echo "# 重新生成: bash scripts/lock_deps.sh"
-  echo "# CI 与本地均可用: pip install -r requirements.lock"
+  echo "$HEADER"
+  echo "# 重新生成: bash scripts/lock_deps.sh$([[ "$ML" == true ]] && echo ' --ml')"
   echo
   .venv/bin/pip freeze | grep -iE "^($(IFS='|'; echo "${PKGS[*]}"))=="
 } > "$LOCK"

@@ -37,7 +37,11 @@ usage() {
 
 脚本:
   scripts/smoke_live.sh       真实接口冒烟（LIVE=1，本地/发布前）
+  scripts/check.sh            单元测试 + MCP parity（发布前）
   scripts/train_demo_model.sh 训练演示 LGB 权重到 models/
+  scripts/lock_deps.sh        更新 requirements.lock（加 --ml 更新 ML lock）
+
+Windows: powershell -ExecutionPolicy Bypass -File scripts/install.ps1
 
 示例:
   bash scripts/install.sh --target all
@@ -227,7 +231,12 @@ install_python_deps() {
 
   if [[ "$WITH_ML" == "true" && -f "$ROOT/requirements-ml.txt" ]]; then
     echo "[python] 安装 ML 依赖: $ROOT/requirements-ml.txt"
-    "$pip" install -q -r "$ROOT/requirements-ml.txt"
+    local ml_file="$ROOT/requirements-ml.txt"
+    if [[ -f "$ROOT/requirements-ml.lock" ]]; then
+      ml_file="$ROOT/requirements-ml.lock"
+      echo "[python] 使用锁定版本: requirements-ml.lock"
+    fi
+    "$pip" install -q -r "$ml_file"
   fi
 
   echo "[python] 依赖就绪: $pyexe"

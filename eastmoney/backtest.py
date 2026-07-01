@@ -149,6 +149,36 @@ def grid_search_thresholds(
     return {"best": best, "grid": results, "metric": metric}
 
 
+def get_kline_resilient(
+    client: Any,
+    secid: str,
+    *,
+    period: str = "daily",
+    adjust: str = "qfq",
+    limit: int = 120,
+) -> list[dict[str, Any]]:
+    """K 线：东财直连失败时降级 AkShare（训练/回测用）。"""
+    from eastmoney.kline import get_kline
+
+    try:
+        return get_kline(client, secid, period=period, adjust=adjust, limit=limit)
+    except Exception as primary_error:
+        from eastmoney.fallback import available, run_fallback
+
+        if not available():
+            raise primary_error
+        rows = run_fallback(
+            "get_kline",
+            secid=secid,
+            period=period,
+            adjust=adjust,
+            limit=limit,
+        )
+        if isinstance(rows, list) and rows:
+            return rows
+        raise primary_error
+
+
 def build_alpha158_samples(
     client: Any,
     secids: Sequence[str],
@@ -158,14 +188,13 @@ def build_alpha158_samples(
 ) -> tuple[list[Sample], list[str]]:
     """从 K 线构建 Alpha158 监督样本（带 date/secid，供时序切分）。"""
     from eastmoney.alpha158 import _bars_to_frame, compute_alpha158_from_frame
-    from eastmoney.kline import get_kline
     from eastmoney.ml_models import alpha158_feature_names
 
     samples: list[Sample] = []
     feature_names: list[str] = []
 
     for secid in secids:
-        bars = get_kline(client, secid, period="daily", adjust="qfq", limit=limit)
+        bars = get_kline_resilient(client, secid, period="daily", adjust="qfq", limit=limit)
         if len(bars) < 80:
             continue
         for i in range(60, len(bars) - forward_days):

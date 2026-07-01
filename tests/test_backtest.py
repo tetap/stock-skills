@@ -1,8 +1,10 @@
 import unittest
+from unittest.mock import MagicMock, patch
 
 from eastmoney.backtest import (
     Sample,
     evaluate_predictions,
+    get_kline_resilient,
     grid_search_thresholds,
     run_long_only_backtest,
     score_to_signal,
@@ -48,6 +50,22 @@ class TestBacktest(unittest.TestCase):
         self.assertEqual(score_to_signal(25), 1)
         self.assertEqual(score_to_signal(-25), -1)
         self.assertEqual(score_to_signal(0), 0)
+
+    @patch("eastmoney.fallback.run_fallback")
+    @patch("eastmoney.fallback.available", return_value=True)
+    @patch("eastmoney.kline.get_kline")
+    def test_get_kline_resilient_fallback(
+        self,
+        mock_kline: MagicMock,
+        _available: MagicMock,
+        mock_fallback: MagicMock,
+    ) -> None:
+        mock_kline.side_effect = ConnectionError("blocked")
+        mock_fallback.return_value = [{"date": "2024-01-01", "close": 10.0, "open": 9.0, "high": 11.0, "low": 8.0, "volume": 1.0, "amount": 10.0}]
+        client = MagicMock()
+        rows = get_kline_resilient(client, "1.600519", limit=10)
+        self.assertEqual(len(rows), 1)
+        mock_fallback.assert_called_once()
 
 
 if __name__ == "__main__":

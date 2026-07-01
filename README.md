@@ -460,8 +460,11 @@ export EASTMONEY_DISABLE_FALLBACK=1   # 禁用降级
 ## 测试
 
 ```bash
-# 单元测试（默认，CI 同款，84 项）
+# 单元测试（默认，CI 同款，86 项）
 bash scripts/test.sh
+
+# 发布前完整检查（测试 + MCP parity）
+bash scripts/check.sh
 
 # 真实接口冒烟（需网络，默认不在 CI 跑）
 LIVE=1 bash scripts/smoke_live.sh

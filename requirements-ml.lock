@@ -1,0 +1,6 @@
+# ML 依赖锁定（可选，配合 --with-ml）
+# 重新生成: bash scripts/lock_deps.sh --ml
+
+lightgbm==4.6.0
+numpy==2.5.0
+torch==2.12.1

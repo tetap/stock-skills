@@ -83,7 +83,13 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.tool == "list":
-        print(json.dumps(TOOL_NAMES, ensure_ascii=False, indent=2))
+        print(
+            json.dumps(
+                {"count": len(TOOL_NAMES), "tools": TOOL_NAMES},
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
         return 0
 
     kwargs = {

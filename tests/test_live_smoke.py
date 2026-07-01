@@ -35,6 +35,15 @@ class TestLiveSmoke(unittest.TestCase):
         self.assertEqual(proto["flow"], "B")
         self.assertGreaterEqual(proto["min_tool_calls"], 20)
 
+    def test_quant_technical_oos_status(self) -> None:
+        result = run_tool("get_quant_technical", secid="1.600519")
+        self.assertIn("oos_status", result)
+        self.assertIn("quant_verdict", result)
+        oos = result["oos_status"]
+        if oos.get("available"):
+            self.assertFalse(oos["oos_passed"])
+            self.assertIn("oos_warning", result["quant_verdict"])
+
 
 if __name__ == "__main__":
     unittest.main()
