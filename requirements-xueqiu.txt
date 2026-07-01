@@ -1,2 +1,2 @@
-# 可选：从浏览器自动读取雪球 Cookie（须本机 Chrome/Safari 已登录 xueqiu.com）
-browser-cookie3>=0.19.1
+# 已合并至 requirements.txt（browser-cookie3）
+# 保留此文件仅为兼容旧文档引用

@@ -4,3 +4,4 @@ akshare>=1.14.0
 curl_cffi>=0.7.0
 mcp>=1.2.0
 pysnowball>=0.1.8
+browser-cookie3>=0.19.1

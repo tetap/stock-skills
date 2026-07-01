@@ -14,6 +14,7 @@ from eastmoney.xueqiu_auth import (
     XueqiuAuthRequired,
     ensure_xueqiu_cookie,
     resolve_xueqiu_cookie,
+    xueqiu_cookie_diagnostics,
 )
 
 XUEQIU_SCREENER_URL = "https://xueqiu.com/service/v5/stock/screener/screen"
@@ -65,19 +66,17 @@ def xueqiu_auth_guide(*, reason: str = "missing_token") -> dict[str, Any]:
         "login_url": XUEQIU_LOGIN_URL,
         "message": reason_text,
         "user_message": (
-            f"请先登录雪球：{XUEQIU_LOGIN_URL}\n"
-            f"登录后从浏览器 Cookie 复制 {XUEQIU_COOKIE_NAME}，"
-            f"执行 export {XUEQIU_TOKEN_ENV}='你的token' 后重试。"
+            f"请先在本机浏览器登录雪球：{XUEQIU_LOGIN_URL}\n"
+            "登录后组件会自动从 Chrome/Safari 读取 Cookie，一般无需手动配置环境变量。"
         ),
         "steps": [
-            f"在浏览器打开 {XUEQIU_LOGIN_URL} 并完成登录（未登录无法获取 Cookie）。",
-            "F12 → Application → Cookies → xueqiu.com → 复制 xq_a_token。",
-            f"终端：export {XUEQIU_TOKEN_ENV}='粘贴值'（或整串 Cookie 写入 XUEQIUTOKEN）。",
-            "MCP 用户：写入 ~/.cursor/mcp.json 的 eastmoney-stock.env.XUEQIU_TOKEN，重启 Cursor。",
-            "也可安装 browser-cookie3 后自动从 Chrome/Safari 读取（须本机已登录雪球）。",
-            "配置完成后重试 get_news_and_reports --source xueqiu 或 get_xueqiu_data。",
+            f"在 Chrome 或 Safari 打开 {XUEQIU_LOGIN_URL} 并完成登录。",
+            "保持浏览器登录状态，直接重试 get_market_news / get_xueqiu_data（会自动读 Cookie）。",
+            "若仍失败：macOS 给 Cursor/终端「完全磁盘访问权限」，或 pip install browser-cookie3。",
+            "可选兜底：export XUEQIU_TOKEN='xq_a_token值'（仅 CI 或无浏览器环境需要）。",
+            "诊断：python scripts/em.py get_xueqiu_auth_status",
         ],
-        "note": "讨论热榜无需 token；热门资讯(livenews)、帖子、研报、pysnowball 接口需要登录 Cookie。",
+        "note": "热榜无需登录；热门资讯/帖子/研报会自动读浏览器 Cookie。",
     }
 
 
@@ -96,14 +95,7 @@ def xueqiu_auth_hint_row(*, reason: str = "missing_token") -> dict[str, Any]:
 
 
 def xueqiu_auth_status(*, try_browser: bool = True) -> dict[str, Any]:
-    cookie, source = resolve_xueqiu_cookie(try_browser=try_browser)
-    return {
-        "authenticated": bool(cookie),
-        "cookie_source": source,
-        "login_url": XUEQIU_LOGIN_URL,
-        "env_vars": [XUEQIU_TOKEN_ENV, "XUEQIUTOKEN"],
-        "pysnowball_available": _pysnowball_available(),
-    }
+    return xueqiu_cookie_diagnostics(try_browser=try_browser)
 
 
 def _pysnowball_available() -> bool:

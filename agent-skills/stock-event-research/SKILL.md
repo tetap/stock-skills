@@ -46,31 +46,22 @@ python scripts/em.py get_news_and_reports --code 002074 --content-type announcem
 
 **热门资讯 API**：`https://xueqiu.com/statuses/livenews/list.json?category=6`（hq 页热门流，**需登录 Cookie**）
 
-## 雪球登录与 pysnowball（研报/资金/帖子）
+## 雪球 Cookie（自动读取，无需手动配 env）
 
-讨论**热榜**无需登录。帖子、研报、资金流向等需 Cookie：
+讨论**热榜**无需登录。热门资讯 / 帖子 / 研报会 **自动从本机 Chrome/Safari 读取 Cookie**：
 
-1. 打开 **[https://xueqiu.com/hq](https://xueqiu.com/hq)** 并完成登录。
-2. Cookie 复制 `xq_a_token` → `export XUEQIU_TOKEN='值'`（或整串 `XUEQIUTOKEN='xq_a_token=...;u=...;'`）。
-3. 可选：`pip install browser-cookie3` 后自动从 Chrome/Safari 读取（须本机已登录）。
-4. MCP：写入 `~/.cursor/mcp.json` → `eastmoney-stock.env.XUEQIU_TOKEN`，重启 Cursor。
-
-**无 Cookie 时**：工具返回 `"interrupt": true`，Agent **必须中断**并提示用户先登录 hq 页，勿编造帖子内容。
+1. 在 Chrome 或 Safari 打开 **[https://xueqiu.com/hq](https://xueqiu.com/hq)** 并登录。
+2. **直接调用工具**，无需 `export XUEQIU_TOKEN`。
+3. 读取失败时：确认 `pip install browser-cookie3`；macOS 给 Cursor **完全磁盘访问权限**。
+4. `XUEQIU_TOKEN` 仅作 CI / 无浏览器环境兜底。
 
 ```bash
 python scripts/em.py get_xueqiu_auth_status
-python scripts/em.py get_xueqiu_auth_guide
-python scripts/em.py get_xueqiu_data --code 600519 --data-type report --limit 5
-python scripts/em.py get_xueqiu_data --code 002074 --data-type capital_flow
-python scripts/em.py get_market_news --news-type xueqiu_hot --limit 10 --source xueqiu
+python scripts/em.py get_market_news --news-type xueqiu_livenews --source xueqiu --limit 15
+python scripts/em.py get_xueqiu_data --code 600519 --data-type report
 ```
 
-pysnowball 支持的 `data_type`：`report` `earningforecast` `capital_flow` `capital_history` `margin` `blocktrans` `quote` `pankou`
-
-**Agent 流程**：
-
-1. 先 `get_xueqiu_auth_status`；若 `authenticated: false` → 发登录引导并 **暂停**。
-2. 用户配置后 → `get_news_and_reports --source xueqiu` 或 `get_xueqiu_data`。
+**Agent 流程**：先 `get_xueqiu_auth_status`；若 `authenticated: false` → 提示用户登录 hq 页，**不要**要求手动复制 token（除非自动读取持续失败）。
 
 分析个股或板块时，**务必**拉快讯并用 keyword 过滤相关行业词。
 

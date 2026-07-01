@@ -19,6 +19,7 @@ from eastmoney.xueqiu_auth import (
     XUEQIU_LOGIN_URL,
     XueqiuAuthRequired,
     build_cookie_string,
+    load_browser_cookies,
     resolve_xueqiu_cookie,
 )
 
@@ -31,11 +32,24 @@ class TestXueqiuAuth(unittest.TestCase):
             "xq_a_token=abc123;u=u42;",
         )
 
-    @patch.dict(os.environ, {"XUEQIU_TOKEN": "tok123"}, clear=False)
-    def test_resolve_from_env(self) -> None:
-        cookie, source = resolve_xueqiu_cookie(try_browser=False)
+    @patch("eastmoney.xueqiu_auth._load_cookie_cache", return_value=(None, None))
+    @patch("eastmoney.xueqiu_auth.load_browser_cookies", return_value=({}, "browser_not_logged_in"))
+    def test_resolve_env_fallback(self, _mock_browser: MagicMock, _mock_cache: MagicMock) -> None:
+        with patch.dict(os.environ, {"XUEQIU_TOKEN": "tok123"}, clear=False):
+            os.environ.pop("XUEQIUTOKEN", None)
+            cookie, source = resolve_xueqiu_cookie(try_browser=True)
         self.assertEqual(source, "env_xueqiu_token")
         self.assertIn("tok123", cookie or "")
+
+    @patch("eastmoney.xueqiu_auth.load_browser_cookies")
+    def test_resolve_browser_first(self, mock_browser: MagicMock) -> None:
+        mock_browser.return_value = (
+            {"xq_a_token": "from_browser", "u": "123"},
+            "chrome",
+        )
+        cookie, source = resolve_xueqiu_cookie(try_browser=True)
+        self.assertTrue(source.startswith("browser:"))
+        self.assertIn("from_browser", cookie or "")
 
     def test_auth_required_message(self) -> None:
         exc = XueqiuAuthRequired()
@@ -150,10 +164,14 @@ class TestXueqiu(unittest.TestCase):
                 rows = xueqiu_stock_sentiment(client, "002074", limit=3)
         self.assertEqual(rows[0]["provider"], "xueqiu_auth_hint")
 
-    @patch.dict(os.environ, {"XUEQIU_TOKEN": "abc"}, clear=False)
-    def test_auth_status(self) -> None:
-        st = xueqiu_auth_status(try_browser=False)
+    @patch("eastmoney.xueqiu_auth.load_browser_cookies", return_value=({}, "browser_not_logged_in"))
+    @patch("eastmoney.xueqiu_auth._load_cookie_cache", return_value=(None, None))
+    def test_auth_status(self, _c: MagicMock, _b: MagicMock) -> None:
+        with patch.dict(os.environ, {"XUEQIU_TOKEN": "abc"}, clear=False):
+            os.environ.pop("XUEQIUTOKEN", None)
+            st = xueqiu_auth_status(try_browser=False)
         self.assertTrue(st["authenticated"])
+        self.assertEqual(st["cookie_source"], "env_xueqiu_token")
 
 
 if __name__ == "__main__":
