@@ -224,7 +224,7 @@ def get_market_news(
         str, Field(description="eastmoney/sina/xueqiu/all，flash 默认 all 合并东财+新浪+雪球热榜")
     ] = "all",
 ) -> str:
-    """【舆情】市场快讯/要闻；默认合并东方财富 7×24、新浪直播/滚动与雪球讨论热榜。"""
+    """【舆情】市场快讯/要闻；source=all 合并东财+新浪+雪球热榜；xueqiu_livenews 需浏览器 Cookie。"""
     kwargs: dict[str, Any] = {"news_type": news_type, "limit": limit, "source": source}
     if keyword:
         kwargs["keyword"] = keyword
@@ -452,6 +452,14 @@ def get_quant_technical(
             adjust=adjust,
         )
     )
+
+
+@mcp.tool()
+def get_review_protocol(
+    flow: Annotated[str, Field(description="审核流程 B=个股 / C=板块 / D=市场简报")] = "B",
+) -> str:
+    """【审核】返回多重审核轮次、门禁与 §7 模板要求（配合 review-protocol.md）。"""
+    return _dump(run_tool("get_review_protocol", flow=flow))
 
 
 def main() -> None:

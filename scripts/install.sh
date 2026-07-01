@@ -174,7 +174,16 @@ install_python_deps() {
 
   echo "[python] 安装依赖: $ROOT/requirements.txt"
   "$pip" install -q --upgrade pip wheel
-  "$pip" install -q -r "$ROOT/requirements.txt"
+
+  local req_hash_file="$venv/.requirements.sha256"
+  local req_hash
+  req_hash="$(shasum -a 256 "$ROOT/requirements.txt" | awk '{print $1}')"
+  if [[ -f "$req_hash_file" && "$(cat "$req_hash_file")" == "$req_hash" ]]; then
+    echo "[python] requirements.txt 未变化，跳过 pip install"
+  else
+    "$pip" install -q -r "$ROOT/requirements.txt"
+    echo "$req_hash" > "$req_hash_file"
+  fi
 
   if [[ "$WITH_ML" == "true" && -f "$ROOT/requirements-ml.txt" ]]; then
     echo "[python] 安装 ML 依赖: $ROOT/requirements-ml.txt"
@@ -206,11 +215,14 @@ from pathlib import Path
 
 root = Path(sys.argv[1])
 mcp_path = root / ".cursor" / "mcp.json"
+example = root / ".cursor" / "mcp.json.example"
 pyexe = str(root / ".venv" / "bin" / "python")
 
 data = {}
 if mcp_path.is_file():
     data = json.loads(mcp_path.read_text(encoding="utf-8"))
+elif example.is_file():
+    data = json.loads(example.read_text(encoding="utf-8"))
 servers = data.setdefault("mcpServers", {})
 servers["eastmoney-stock"] = {
     "command": pyexe,

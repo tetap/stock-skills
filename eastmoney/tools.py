@@ -30,6 +30,7 @@ from eastmoney.sector import get_sector_detail, get_sector_overview, search_sect
 from eastmoney.short_term import get_limit_up_history, get_short_term_monitor
 from eastmoney.signals import get_indicator_interpretation, get_limit_up_gene
 from eastmoney.symbols import resolve_symbol, search_stocks
+from eastmoney.review import get_review_protocol
 from eastmoney.xueqiu import xueqiu_auth_guide, xueqiu_auth_status
 from eastmoney.xueqiu_auth import XueqiuAuthRequired
 from eastmoney.xueqiu_pysnowball import SUPPORTED_TYPES, fetch_xueqiu_data
@@ -211,6 +212,8 @@ def _run_primary(name: str, **kwargs: Any) -> Any:
             limit=int(kwargs.get("limit", 10)),
             try_browser=bool(tb),
         )
+    if name == "get_review_protocol":
+        return get_review_protocol(flow=kwargs.get("flow", "B"))
     if name == "get_alpha360_tensor":
         include_tensor = kwargs.get("include_tensor", False)
         if isinstance(include_tensor, str):
@@ -289,6 +292,16 @@ def _try_fallback(name: str, kwargs: dict[str, Any], primary_error: Exception | 
         return None
 
 
+def format_tool_result(result: Any) -> Any:
+    """统一 MCP/CLI 可读结构；interrupt 时附加 status 字段。"""
+    if isinstance(result, dict) and result.get("interrupt"):
+        return {
+            "status": "auth_required",
+            **result,
+        }
+    return result
+
+
 def run_tool(name: str, **kwargs: Any) -> Any:
     if name not in TOOL_NAMES:
         raise ValueError(f"未知工具: {name}")
@@ -302,9 +315,9 @@ def run_tool(name: str, **kwargs: Any) -> Any:
             fb = _try_fallback(name, kwargs)
             if fb is not None and not _is_empty_result(name, fb):
                 return fb
-        return result
+        return format_tool_result(result)
     except XueqiuAuthRequired as auth_exc:
-        return auth_exc.to_dict()
+        return format_tool_result(auth_exc.to_dict())
     except Exception as primary_error:
         fb = _try_fallback(name, kwargs, primary_error)
         if fb is not None:
@@ -348,4 +361,5 @@ TOOL_NAMES = [
     "get_alpha158_factors",
     "get_alpha158_score",
     "get_quant_technical",
+    "get_review_protocol",
 ]

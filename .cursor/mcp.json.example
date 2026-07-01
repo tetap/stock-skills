@@ -1,0 +1,10 @@
+{
+  "_comment": "模板：运行 bash scripts/install.sh --target cursor 会生成本地 .cursor/mcp.json（绝对路径，勿提交）",
+  "mcpServers": {
+    "eastmoney-stock": {
+      "command": ".venv/bin/python",
+      "args": ["-m", "mcp_server"],
+      "cwd": "."
+    }
+  }
+}

@@ -36,7 +36,9 @@ class XueqiuAuthRequired(Exception):
         if self.reason == "browser_locked":
             return (
                 base
-                + "\n未能读取浏览器 Cookie（macOS 需给终端/Cursor「完全磁盘访问权限」，或关闭浏览器后重试）。"
+                + "\n未能读取浏览器 Cookie（macOS 需给 Cursor「完全磁盘访问权限」；"
+                "MCP 子进程与终端权限不同，CLI 能读而 MCP 不能时属正常现象）。"
+                "可关闭浏览器后重试，或 export XUEQIU_TOKEN 兜底。"
             )
         if self.detail:
             return base + f"\n{self.detail}"
@@ -245,4 +247,9 @@ def xueqiu_cookie_diagnostics(*, try_browser: bool = True) -> dict[str, Any]:
         },
         "login_url": XUEQIU_LOGIN_URL,
         "hint": "在 Chrome/Safari 打开 hq 页登录即可；一般无需配置 XUEQIU_TOKEN。",
+        "mcp_note": (
+            "MCP 子进程可能无法读取浏览器 Cookie（macOS 磁盘权限）。"
+            "若 get_xueqiu_auth_status 在 CLI 正常、MCP 失败："
+            "给 Cursor「完全磁盘访问权限」后重启，或使用 XUEQIU_TOKEN 环境变量。"
+        ),
     }

@@ -72,7 +72,7 @@ def xueqiu_auth_guide(*, reason: str = "missing_token") -> dict[str, Any]:
         "steps": [
             f"在 Chrome 或 Safari 打开 {XUEQIU_LOGIN_URL} 并完成登录。",
             "保持浏览器登录状态，直接重试 get_market_news / get_xueqiu_data（会自动读 Cookie）。",
-            "若仍失败：macOS 给 Cursor/终端「完全磁盘访问权限」，或 pip install browser-cookie3。",
+            "若仍失败：macOS 给 Cursor「完全磁盘访问权限」后重启 Cursor；CLI 能读 Cookie 而 MCP 不能时属权限差异。",
             "可选兜底：export XUEQIU_TOKEN='xq_a_token值'（仅 CI 或无浏览器环境需要）。",
             "诊断：python scripts/em.py get_xueqiu_auth_status",
         ],

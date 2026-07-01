@@ -1,2 +1,0 @@
-# 已合并至 requirements.txt（browser-cookie3）
-# 保留此文件仅为兼容旧文档引用

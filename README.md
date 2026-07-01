@@ -270,7 +270,7 @@ python scripts/em.py get_realtime_quote --secid 1.600519
 
 ### 个股分析
 
-分析时 **尽量拉全 MCP/CLI 工具（≥18 次）**，再写 **6 节简洁报告**。
+分析时 **尽量拉全 MCP/CLI 工具（≥20 次）**，再写 **6 节简洁报告**。
 
 模板见 [`agent-skills/stock-main/analysis-report.md`](agent-skills/stock-main/analysis-report.md)。
 
@@ -366,14 +366,14 @@ python scripts/em.py compare_performance --secid 1.600519 --benchmark-code 00030
 ├── agent-skills/          # 分析 workflow（12 个 SKILL，含 stock-main 主编排）
 ├── agent-commands/        # Cursor 快捷指令（*.md）
 ├── agent-slash-skills/    # Claude/Codex 快捷指令（SKILL.md 目录）
-├── eastmoney/             # Python 数据层（19 工具）
+├── eastmoney/             # Python 数据层（36 个 CLI/MCP 工具）
 ├── mcp_server/            # Cursor MCP：eastmoney-stock
 ├── scripts/
 │   ├── em.py              # CLI
 │   ├── install.sh         # 安装脚本
 │   └── test.sh            # 测试
 ├── .cursor/
-│   ├── mcp.json
+│   ├── mcp.json.example   # MCP 模板（install.sh 生成本地 mcp.json）
 │   ├── skills/            # 安装后生成
 │   └── commands/          # 安装后生成
 ├── .claude/skills/        # 安装后生成（项目级）
@@ -397,7 +397,6 @@ python scripts/em.py compare_performance --secid 1.600519 --benchmark-code 00030
 | `stock-historical-analysis` | 历史统计 |
 | `stock-sector-analysis` | 板块 |
 | `stock-event-research` | 新闻 / 公告 / 股东 |
-| `stock-investment-advisor` | **已废弃**（原顾问角色，请用 stock-main） |
 | `eastmoney-api` | 工具规范、secid、限流 |
 
 ---
@@ -427,9 +426,9 @@ python scripts/em.py compare_performance --secid 1.600519 --benchmark-code 00030
 
 ---
 
-## MCP 工具（29 个，Cursor）
+## MCP 工具（36 个，Cursor）
 
-含：7×24 快讯、板块模糊搜索、基本面三表、短线盯盘、筹码等。完整列表：`python scripts/em.py list`
+含：7×24 快讯、雪球热门资讯（xueqiu_livenews）、板块模糊搜索、Alpha158/360 量化、审核协议等。完整列表：`python scripts/em.py list`
 
 ---
 

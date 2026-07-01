@@ -15,9 +15,9 @@
 
 1. **stock-main** 按意图路由：
    - 查价 → quick-lookup
-   - 个股 → analysis-report.md（≥18 次工具）
+   - 个股 → analysis-report.md（≥20 次工具）
    - 板块+选股 → sector-report.md（≥12 次 + 候选股轻扫）
    - 热点/情绪 → market-brief.md
-2. **新闻情绪必拉**：`get_market_news`（flash/headline，可加 keyword）
+2. **新闻情绪必拉**：`get_market_news`（flash/xueqiu_livenews/xueqiu_hot，`--source all|xueqiu`，可加 keyword）
 3. 输出简洁报告（表格为主），§1 给可操作建议；**禁止顾问角色**
 4. 末尾免责声明
