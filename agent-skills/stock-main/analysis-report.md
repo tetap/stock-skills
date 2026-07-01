@@ -200,6 +200,8 @@
 
 ## 内部轮次（给用户前必做，详见 [review-protocol.md](review-protocol.md)）
 
+先调用 `get_review_protocol(flow=B)` 获取轮次清单，再执行：
+
 R1 初稿 → R2 审计 → R3 ≥5 个魔鬼问题 → R4 一致性矩阵 → R5 三场景压力测试 → R6 门禁
 
 **禁止**跳过上述轮次直接输出 §1~§6。

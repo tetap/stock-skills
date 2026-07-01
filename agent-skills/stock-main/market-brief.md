@@ -72,7 +72,7 @@
 > 仅供参考，不构成投资建议。
 ```
 
-输出前执行 [review-protocol.md](review-protocol.md) **D 流程三轮**。
+输出前调用 `get_review_protocol(flow=D)`，执行 [review-protocol.md](review-protocol.md) **D 流程三轮**。
 
 ---
 

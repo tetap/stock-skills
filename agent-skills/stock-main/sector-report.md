@@ -111,7 +111,7 @@
 > 终稿置信度：{X}/10 · 仅供参考，不构成投资建议。
 ```
 
-输出前执行 [review-protocol.md](review-protocol.md) **C 流程四轮**。
+输出前调用 `get_review_protocol(flow=C)`，执行 [review-protocol.md](review-protocol.md) **C 流程四轮**。
 
 ---
 

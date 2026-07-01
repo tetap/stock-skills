@@ -62,6 +62,18 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="get_alpha158_factors 返回全部 158+ 因子",
     )
+    parser.add_argument(
+        "--flow",
+        default="B",
+        choices=["B", "C", "D", "b", "c", "d"],
+        help="get_review_protocol 流程：B=个股 / C=板块 / D=市场简报",
+    )
+    parser.add_argument(
+        "--try-browser",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="get_xueqiu_auth_status / get_xueqiu_data 是否尝试读浏览器 Cookie",
+    )
 
 
 def main() -> int:
@@ -101,6 +113,8 @@ def main() -> int:
             "seq_len": args.seq_len,
             "include_tensor": args.include_tensor or None,
             "include_all_factors": args.include_all_factors or None,
+            "flow": args.flow.upper() if args.flow else None,
+            "try_browser": args.try_browser,
         }.items()
         if v is not None
     }

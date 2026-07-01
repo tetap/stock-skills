@@ -137,6 +137,21 @@ install_commands() {
   link_dir_entries "$COMMANDS_SRC" "$1" false "command"
 }
 
+remove_deprecated_skills() {
+  local dest="$1"
+  local name
+  local deprecated=(
+    stock-investment-advisor
+    stock-role
+  )
+  for name in "${deprecated[@]}"; do
+    if [[ -e "$dest/$name" ]]; then
+      rm -rf "$dest/$name"
+      echo "removed deprecated skill: $dest/$name"
+    fi
+  done
+}
+
 find_python3() {
   if command -v python3 >/dev/null 2>&1; then
     command -v python3
@@ -295,6 +310,7 @@ for agent in "${expanded[@]}"; do
   if [[ "$WHAT" == "skills" || "$WHAT" == "all" ]]; then
     dest="$(skills_dest_for "$agent")"
     echo "[$agent 分析 skills] -> $dest"
+    remove_deprecated_skills "$dest"
     install_skills "$dest"
   fi
 
