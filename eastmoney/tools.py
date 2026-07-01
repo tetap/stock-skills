@@ -26,6 +26,7 @@ from eastmoney.sector import get_sector_detail, get_sector_overview, search_sect
 from eastmoney.short_term import get_limit_up_history, get_short_term_monitor
 from eastmoney.signals import get_indicator_interpretation, get_limit_up_gene
 from eastmoney.symbols import resolve_symbol, search_stocks
+from eastmoney.xueqiu import xueqiu_auth_guide
 
 _client: EastMoneyClient | None = None
 
@@ -187,6 +188,8 @@ def _run_primary(name: str, **kwargs: Any) -> Any:
         return get_short_term_monitor(client, kwargs["code"])
     if name == "get_limit_up_history":
         return get_limit_up_history(client, kwargs["code"], limit=int(kwargs.get("limit", 10)))
+    if name == "get_xueqiu_auth_guide":
+        return xueqiu_auth_guide(reason=kwargs.get("reason", "missing_token"))
 
     raise ValueError(f"未知工具: {name}")
 
@@ -261,4 +264,5 @@ TOOL_NAMES = [
     "get_limit_up_gene",
     "get_short_term_monitor",
     "get_limit_up_history",
+    "get_xueqiu_auth_guide",
 ]

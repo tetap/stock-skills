@@ -31,10 +31,16 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--board-name")
     parser.add_argument("--sort", default="change_pct")
     parser.add_argument("--indicators", help="逗号分隔，如 ma")
-    parser.add_argument("--news-type", default="flash", choices=["flash", "headline", "breakfast", "sina_roll", "sina_live"])
+    parser.add_argument("--news-type", default="flash", choices=["flash", "headline", "breakfast", "sina_roll", "sina_live", "xueqiu_hot"])
     parser.add_argument("--keyword", help="资讯关键词过滤，如 电池、新能源")
-    parser.add_argument("--source", default="all", choices=["eastmoney", "sina", "all"])
-    parser.add_argument("--stock-name", help="个股简称，新浪新闻筛选时使用")
+    parser.add_argument("--source", default="all", choices=["eastmoney", "sina", "xueqiu", "all"])
+    parser.add_argument("--stock-name", help="个股简称，新浪/雪球筛选时使用")
+    parser.add_argument(
+        "--reason",
+        default="missing_token",
+        choices=["missing_token", "auth_failed", "blocked"],
+        help="get_xueqiu_auth_guide 失败原因类型",
+    )
 
 
 def main() -> int:
@@ -69,6 +75,7 @@ def main() -> int:
             "keyword": args.keyword,
             "source": args.source,
             "stock_name": args.stock_name,
+            "reason": args.reason,
         }.items()
         if v is not None
     }

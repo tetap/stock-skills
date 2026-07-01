@@ -133,11 +133,11 @@ def get_news_and_reports(
     content_type: Annotated[str, Field(description="news/announcement/report")] = "news",
     limit: Annotated[int, Field(ge=1, le=30)] = 10,
     source: Annotated[
-        str, Field(description="eastmoney=东财搜索, sina=新浪筛选, all=合并(默认)")
+        str, Field(description="eastmoney=东财搜索, sina=新浪筛选, xueqiu=雪球热度, all=合并(默认)")
     ] = "all",
-    stock_name: Annotated[str, Field(description="股票简称，新浪筛选新闻时使用")] = "",
+    stock_name: Annotated[str, Field(description="股票简称，新浪/雪球筛选时使用")] = "",
 ) -> str:
-    """【舆情】个股新闻/公告/研报。新闻已改用东财搜索 API，可合并新浪 7×24。"""
+    """【舆情】个股新闻/公告/研报。新闻已改用东财搜索 API，可合并新浪 7×24 与雪球讨论热度。"""
     kwargs: dict[str, Any] = {
         "code": code,
         "content_type": content_type,
@@ -216,15 +216,15 @@ def compare_performance(
 def get_market_news(
     news_type: Annotated[
         str,
-        Field(description="flash/headline/breakfast/sina_roll/sina_live"),
+        Field(description="flash/headline/breakfast/sina_roll/sina_live/xueqiu_hot"),
     ] = "flash",
     keyword: Annotated[str, Field(description="标题/摘要关键词过滤，如 电池、半导体")] = "",
     limit: Annotated[int, Field(ge=1, le=50)] = 20,
     source: Annotated[
-        str, Field(description="eastmoney/sina/all，flash 默认 all 合并东财+新浪")
+        str, Field(description="eastmoney/sina/xueqiu/all，flash 默认 all 合并东财+新浪+雪球热榜")
     ] = "all",
 ) -> str:
-    """【舆情】市场快讯/要闻；默认合并东方财富 7×24 与新浪直播/滚动。"""
+    """【舆情】市场快讯/要闻；默认合并东方财富 7×24、新浪直播/滚动与雪球讨论热榜。"""
     kwargs: dict[str, Any] = {"news_type": news_type, "limit": limit, "source": source}
     if keyword:
         kwargs["keyword"] = keyword
@@ -318,6 +318,17 @@ def get_limit_up_history(
 ) -> str:
     """【短线】涨跌停历史明细（RPT_INTSELECTION_LIMITUP）。"""
     return _dump(run_tool("get_limit_up_history", code=code, limit=limit))
+
+
+@mcp.tool()
+def get_xueqiu_auth_guide(
+    reason: Annotated[
+        str,
+        Field(description="missing_token=未配置, auth_failed=凭证失效, blocked=WAF拦截"),
+    ] = "missing_token",
+) -> str:
+    """【舆情】雪球 xq_a_token 获取与登录引导；帖子接口不可用时可先调用，再让用户配置后继续。"""
+    return _dump(run_tool("get_xueqiu_auth_guide", reason=reason))
 
 
 def main() -> None:
