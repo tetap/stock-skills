@@ -27,6 +27,8 @@ CI 会在 push/PR 时自动跑 `test.yml`（Python 3.12 + `requirements.lock`）
 
 PR 与 Issue 模板：`.github/pull_request_template.md`、`.github/ISSUE_TEMPLATE/`。
 
+安全漏洞：见 [SECURITY.md](SECURITY.md)（勿在公开 Issue 粘贴 Cookie/Token）。
+
 ---
 
 ## 常见改动 checklist

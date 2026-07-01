@@ -21,6 +21,13 @@ GITHUB_TEMPLATES = (
     ROOT / ".github" / "ISSUE_TEMPLATE" / "feature_request.yml",
 )
 
+GOVERNANCE_DOCS = (
+    ROOT / "AGENTS.md",
+    ROOT / "CONTRIBUTING.md",
+    ROOT / "SECURITY.md",
+    ROOT / "CHANGELOG.md",
+)
+
 
 class TestProjectGovernance(unittest.TestCase):
     def test_cursor_rules_present(self) -> None:
@@ -32,6 +39,10 @@ class TestProjectGovernance(unittest.TestCase):
 
     def test_github_templates_present(self) -> None:
         for path in GITHUB_TEMPLATES:
+            self.assertTrue(path.is_file(), str(path.relative_to(ROOT)))
+
+    def test_governance_docs_present(self) -> None:
+        for path in GOVERNANCE_DOCS:
             self.assertTrue(path.is_file(), str(path.relative_to(ROOT)))
 
 

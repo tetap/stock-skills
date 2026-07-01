@@ -8,6 +8,8 @@
 
 > **免责声明**：数据仅供参考，不构成任何投资建议。
 
+[变更记录](CHANGELOG.md) · [贡献](CONTRIBUTING.md) · [安全](SECURITY.md) · [Agent 指南](AGENTS.md)
+
 ---
 
 ## 5 分钟上手
