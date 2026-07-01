@@ -1,5 +1,7 @@
 # Eastmoney Stock Skills
 
+![test](https://github.com/tetap/stock-skills/actions/workflows/test.yml/badge.svg)
+
 东方财富 A 股数据 + Agent Skills + **`/stock` 主命令**（查价 / **全量分析**），支持 Cursor、Claude Code、Codex CLI。
 
 **核心亮点**：`/stock` 一个入口 — **个股全量分析**、**板块走势+选股**、**市场热点情绪**；拉齐基本面/技术/资金/筹码/**7×24 快讯**，输出简洁可操作建议，**不使用**投资顾问角色。
@@ -13,7 +15,7 @@
 ### 0. 克隆并安装（Skills + Python 依赖 + MCP 一键完成）
 
 ```bash
-git clone <your-repo-url> skills
+git clone git@github.com:tetap/stock-skills.git skills
 cd skills
 
 # 自动：.venv + pip install -r requirements.txt + 同步 .cursor/mcp.json + 安装 Skills
@@ -84,7 +86,9 @@ bash scripts/install.sh --target cursor --scope project # 仅本仓库
 |------|------|------|
 | 分析 Skills | `~/.cursor/skills/` | `.cursor/skills/` |
 | 快捷指令 | `~/.cursor/commands/` | `.cursor/commands/` |
-| MCP 配置 | — | 运行 `install.sh` 生成本地 `.cursor/mcp.json`（见 `.cursor/mcp.json.example`） |
+| MCP 配置 | — | 运行 `install.sh` 生成本地 **项目内** `.cursor/mcp.json`（见 `.cursor/mcp.json.example`） |
+
+> **MCP 路径说明**：`install.sh` 始终把 `eastmoney-stock` 写入**当前仓库**的 `.cursor/mcp.json`（含本机绝对路径），与 `--scope user/project` 无关。Skills 可装到 `~/.cursor/skills/`，但 MCP 需在 Cursor 打开**本仓库**时加载。若 clone 到多个目录，每个目录各跑一次 `install.sh`；勿把含个人路径的 `mcp.json` 提交到 Git。
 
 ### 启用 MCP（推荐，模型可直接调全部数据工具）
 

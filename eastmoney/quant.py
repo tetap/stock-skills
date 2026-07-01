@@ -7,7 +7,7 @@ from typing import Any
 from eastmoney.alpha158 import get_alpha158_score
 from eastmoney.alpha360_infer import get_alpha360_score
 from eastmoney.client import EastMoneyClient
-from eastmoney.ml_models import model_status
+from eastmoney.ml_models import load_lgb_oos_status, model_status
 
 
 def _band(score: float) -> str:
@@ -144,10 +144,16 @@ def get_quant_technical(
     """一次拉齐 Alpha158 + Alpha360（含 5/60 日序列分）+ quant_verdict。"""
     a158 = get_alpha158_score(client, secid, period=period, adjust=adjust)
     a360 = get_alpha360_score(client, secid, period=period, adjust=adjust)
+    oos = load_lgb_oos_status()
+    verdict = build_quant_verdict(a158, a360)
+    if oos.get("report_cap"):
+        verdict = dict(verdict)
+        verdict["oos_warning"] = oos["report_cap"]
     return {
         "secid": secid,
         "latest_date": a158.get("latest_date") or a360.get("end_date"),
         "model_status": model_status(),
+        "oos_status": oos,
         "alpha158": {
             "factor_count": a158.get("factor_count"),
             "factor_count_note": a158.get("factor_count_note"),
@@ -158,5 +164,5 @@ def get_quant_technical(
             "sequence_summary": a360.get("sequence_summary"),
             "inference": a360.get("inference"),
         },
-        "quant_verdict": build_quant_verdict(a158, a360),
+        "quant_verdict": verdict,
     }

@@ -24,3 +24,6 @@ jobs:
 
       - name: Run tests
         run: bash scripts/test.sh
+
+      - name: MCP module smoke
+        run: .venv/bin/python -c "import mcp_server.server as s; print('mcp tools ok')"

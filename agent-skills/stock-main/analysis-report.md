@@ -97,7 +97,7 @@
 
 **§3 技术面** 优先调用 `get_quant_technical`；若 5 日序列分与 60 日相反，必须写 **quant_verdict.summary**（如「短线改善·中线仍弱」），禁止只写一个合成数。
 
-> **策略 vs 研究**：`quant_verdict` 是实时因子解读，**不等于**通过样本外回测的策略信号。若 `model_status` 显示无 LGB 权重或 OOS IC≤0，§3 须标注「量化信号未过样本外检验，仅辅助」。
+> **策略 vs 研究**：`quant_verdict` 是实时因子解读，**不等于**通过样本外回测的策略信号。若 `oos_status.oos_passed` 为 `false` 或 `null`，或 `quant_verdict.oos_warning` 存在，§3 须标注「量化信号未过样本外检验，仅辅助」，评级上限「右侧等待」。
 
 **§5 事件与板块** 必须写：个股新闻 2 条 + 市场热点/情绪 1~2 条 + **雪球讨论热度排名**（若有）。
 

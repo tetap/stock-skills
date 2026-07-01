@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import math
 import os
 from pathlib import Path
@@ -62,6 +63,60 @@ def try_lgb158_score(
     }
 
 
+def load_lgb_oos_status(*, model_path: str | Path | None = None) -> dict[str, Any]:
+    """读取 LightGBM 训练产出的 OOS 指标（alpha158_lgb.metrics.json）。"""
+    path = Path(model_path or os.getenv("ALPHA158_MODEL_PATH", DEFAULT_LGB_PATH))
+    metrics_path = path.with_suffix(".metrics.json")
+    base = {
+        "metrics_path": str(metrics_path),
+        "model_path": str(path),
+    }
+    if not path.is_file():
+        return {
+            **base,
+            "available": False,
+            "oos_passed": None,
+            "reason": "no_model",
+            "report_cap": "无 LGB 权重，quant 为启发式；评级须与 MA/资金/新闻交叉验证",
+        }
+    if not metrics_path.is_file():
+        return {
+            **base,
+            "available": False,
+            "oos_passed": None,
+            "reason": "no_metrics_file",
+            "report_cap": "LGB 权重存在但未找到 OOS 指标；quant 仅辅助，评级上限「右侧等待」",
+        }
+    try:
+        data = json.loads(metrics_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return {
+            **base,
+            "available": False,
+            "oos_passed": None,
+            "reason": "metrics_read_error",
+            "report_cap": "OOS 指标读取失败；quant 仅辅助",
+        }
+
+    oos = (data.get("best") or {}).get("out_of_sample") or {}
+    ic = float(oos.get("ic") or 0)
+    dir_acc = float(oos.get("direction_accuracy") or 0)
+    passed = ic > 0 and dir_acc > 0.5
+    return {
+        **base,
+        "available": True,
+        "oos_passed": passed,
+        "out_of_sample": oos,
+        "train_ratio": data.get("train_ratio"),
+        "sample_count": data.get("sample_count"),
+        "report_cap": (
+            None
+            if passed
+            else "LGB 未过 OOS（IC≤0 或方向准确率≤50%）；quant 仅辅助，评级上限「右侧等待」"
+        ),
+    }
+
+
 def model_status() -> dict[str, Any]:
     """报告当前可用模型（供 get_quant_technical 附加）。"""
     lgb_path = Path(os.getenv("ALPHA158_MODEL_PATH", DEFAULT_LGB_PATH))
@@ -75,5 +130,6 @@ def model_status() -> dict[str, Any]:
             "path": str(tcn_path),
             "available": tcn_path.is_file(),
         },
+        "oos_status": load_lgb_oos_status(model_path=lgb_path),
         "train_hint": "python scripts/train_quant_models.py --help",
     }
