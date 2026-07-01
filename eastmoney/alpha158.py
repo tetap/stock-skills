@@ -10,7 +10,7 @@ import pandas as pd
 
 from eastmoney.alpha360 import _vwap
 from eastmoney.client import EastMoneyClient
-from eastmoney.kline import get_kline
+from eastmoney.kline import get_kline_resilient as get_kline
 
 WINDOWS = (5, 10, 20, 30, 60)
 MIN_BARS = 61

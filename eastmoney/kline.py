@@ -53,3 +53,31 @@ def get_kline(
             }
         )
     return rows
+
+
+def get_kline_resilient(
+    client: EastMoneyClient,
+    secid: str,
+    *,
+    period: str = "daily",
+    adjust: str = "qfq",
+    limit: int = 120,
+) -> list[dict[str, Any]]:
+    """K 线：东财直连失败时降级 AkShare。"""
+    try:
+        return get_kline(client, secid, period=period, adjust=adjust, limit=limit)
+    except Exception as primary_error:
+        from eastmoney.fallback import available, run_fallback
+
+        if not available():
+            raise primary_error
+        rows = run_fallback(
+            "get_kline",
+            secid=secid,
+            period=period,
+            adjust=adjust,
+            limit=limit,
+        )
+        if isinstance(rows, list) and rows:
+            return rows
+        raise primary_error

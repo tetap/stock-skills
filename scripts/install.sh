@@ -39,6 +39,7 @@ usage() {
   scripts/smoke_live.sh       真实接口冒烟（LIVE=1，本地/发布前）
   scripts/check.sh            单元测试 + MCP parity（发布前）
   scripts/train_demo_model.sh 训练演示 LGB 权重到 models/
+  scripts/ensure_demo_models.sh 缺失时从 GitHub 下载演示权重
   scripts/lock_deps.sh        更新 requirements.lock（加 --ml 更新 ML lock）
 
 Windows: powershell -ExecutionPolicy Bypass -File scripts/install.ps1

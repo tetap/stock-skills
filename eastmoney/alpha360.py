@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from eastmoney.client import EastMoneyClient
-from eastmoney.kline import get_kline
+from eastmoney.kline import get_kline_resilient as get_kline
 
 CHANNELS = ("open", "high", "low", "close", "vwap", "volume")
 DEFAULT_SEQ_LEN = 60

@@ -19,7 +19,7 @@ sys.path.insert(0, str(ROOT))
 
 def _heuristic_scores(client, secid: str, limit: int) -> tuple[list[str], list[float], list[float]]:
     from eastmoney.alpha158 import _bars_to_frame, compute_alpha158_from_frame, score_alpha158_heuristic
-    from eastmoney.kline import get_kline
+    from eastmoney.kline import get_kline_resilient as get_kline
 
     bars = get_kline(client, secid, period="daily", adjust="qfq", limit=limit)
     dates: list[str] = []

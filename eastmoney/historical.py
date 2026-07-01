@@ -6,7 +6,7 @@ import math
 from typing import Any
 
 from eastmoney.client import EastMoneyClient
-from eastmoney.kline import get_kline
+from eastmoney.kline import get_kline_resilient as get_kline
 from eastmoney.symbols import code_to_secid
 
 

@@ -158,25 +158,9 @@ def get_kline_resilient(
     limit: int = 120,
 ) -> list[dict[str, Any]]:
     """K 线：东财直连失败时降级 AkShare（训练/回测用）。"""
-    from eastmoney.kline import get_kline
+    from eastmoney.kline import get_kline_resilient as _resilient
 
-    try:
-        return get_kline(client, secid, period=period, adjust=adjust, limit=limit)
-    except Exception as primary_error:
-        from eastmoney.fallback import available, run_fallback
-
-        if not available():
-            raise primary_error
-        rows = run_fallback(
-            "get_kline",
-            secid=secid,
-            period=period,
-            adjust=adjust,
-            limit=limit,
-        )
-        if isinstance(rows, list) and rows:
-            return rows
-        raise primary_error
+    return _resilient(client, secid, period=period, adjust=adjust, limit=limit)
 
 
 def build_alpha158_samples(
