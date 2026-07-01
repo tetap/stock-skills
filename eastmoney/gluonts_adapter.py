@@ -300,6 +300,45 @@ def train_tft(
     )
 
 
+def _extract_forecast_quantiles(fc: Any, last_close: float) -> dict[str, Any]:
+    """GluonTS 分位数预测 → 报告用区间。"""
+    try:
+        p10 = float(fc.quantile(0.1)[-1])
+        p50 = float(fc.quantile(0.5)[-1])
+        p90 = float(fc.quantile(0.9)[-1])
+    except (AttributeError, TypeError, IndexError, ValueError):
+        p50 = float(fc.mean[-1])
+        p10 = p50
+        p90 = p50
+
+    if last_close <= 0:
+        band_pct = 0.0
+    else:
+        band_pct = (p90 - p10) / last_close
+
+    ret_p10 = p10 / last_close - 1 if last_close else 0.0
+    ret_p50 = p50 / last_close - 1 if last_close else 0.0
+    ret_p90 = p90 / last_close - 1 if last_close else 0.0
+
+    if band_pct >= 0.08:
+        uncertainty = "宽"
+    elif band_pct >= 0.04:
+        uncertainty = "中"
+    else:
+        uncertainty = "窄"
+
+    return {
+        "prices": {"p10": round(p10, 4), "p50": round(p50, 4), "p90": round(p90, 4)},
+        "returns": {
+            "p10": round(ret_p10, 6),
+            "p50": round(ret_p50, 6),
+            "p90": round(ret_p90, 6),
+        },
+        "band_width_pct": round(band_pct, 4),
+        "uncertainty": uncertainty,
+    }
+
+
 def _forecast_from_dir(
     client: Any,
     secid: str,
@@ -330,8 +369,9 @@ def _forecast_from_dir(
 
     fc = forecasts[0]
     last_close = float(bars[-1]["close"])
-    mean_end = float(fc.mean[-1])
-    implied_ret = mean_end / last_close - 1 if last_close else 0.0
+    quantiles = _extract_forecast_quantiles(fc, last_close)
+    mean_end = quantiles["prices"]["p50"]
+    implied_ret = quantiles["returns"]["p50"]
     score = _tanh_score(implied_ret * 50, scale=35)
 
     if score >= 20:
@@ -342,6 +382,11 @@ def _forecast_from_dir(
         verdict = f"{method_label}中性"
 
     oos = load_gluonts_oos_status(model_dir=model_dir)
+    q = quantiles
+    interp = (
+        f"GluonTS {method_label} 中位 {implied_ret:.2%}（P10~P90: {q['returns']['p10']:.2%}~{q['returns']['p90']:.2%}，"
+        f"不确定性{q['uncertainty']}）→ {score}（{verdict}）"
+    )
     return {
         "method": model_kind,
         "model_path": str(model_dir),
@@ -349,8 +394,9 @@ def _forecast_from_dir(
         "verdict": verdict,
         "implied_return": round(implied_ret, 6),
         "forecast_horizon": len(fc.mean),
+        "quantiles": q,
         "oos_passed": oos.get("oos_passed"),
-        "interpretation": f"GluonTS {method_label} 隐含 {implied_ret:.2%} → {score}（{verdict}）",
+        "interpretation": interp,
         "_note": f"metrics: {model_dir}/metrics.json",
     }
 

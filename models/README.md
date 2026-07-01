@@ -22,7 +22,15 @@ python scripts/train_quant_models.py --tcn --epochs 40
 python scripts/train_quant_models.py --deepar --deepar-epochs 15
 
 # GluonTS TFT（Temporal Fusion Transformer，优先用于推理）
-python scripts/train_quant_models.py --tft --tft-epochs 10
+python scripts/walk_forward_quant.py --secid 0.300204 --folds 5
+```
+
+## Walk-forward 回测
+
+滚动 expanding window + 每 fold 样本内搜阈值 → 样本外验证：
+
+```bash
+python scripts/walk_forward_quant.py --secid 1.600519 --method auto --folds 5
 ```
 
 GluonTS 数据格式参考：[Pandas DataFrame dataset](https://ts.gluon.ai/stable/tutorials/data_manipulation/pandasdataframes.html)

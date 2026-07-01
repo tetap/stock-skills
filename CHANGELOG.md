@@ -6,7 +6,9 @@
 
 ### 新增
 
-- **Alpha158 LGB 调优**：embargo 切分、L1/L2 正则、feature/bagging fraction、early stopping、`--grid` OOS IC 选优
+- **Walk-forward 回测**：`eastmoney/walk_forward.py` + `scripts/walk_forward_quant.py`（滚动 OOS fold）
+- **`backtest_quant.py --method lgb`**：LGB 模型信号 long-only 回测
+- **GluonTS 分位数输出**：P10/P50/P90 预测区间 + 不确定性（宽/中/窄）写入 `quant_verdict`
 - **Alpha360 TCN 真实训练**：`--tcn` + OOS metrics（`alpha360_tcn.metrics.json`）
 - **GluonTS DeepAR**：`eastmoney/gluonts_adapter.py`（PandasDataset 长表）+ `--deepar` 训练
 - **`eastmoney/quant_training.py`**、**`eastmoney/tcn_model.py`** 统一训练/推理结构

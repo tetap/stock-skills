@@ -131,6 +131,18 @@ class TestMlModels(unittest.TestCase):
         self.assertIn("gluonts", st)
         self.assertIn("oos_status", st)
 
+    def test_verdict_wide_quantile_uncertainty(self) -> None:
+        a158 = {"inference": {"score": 10, "verdict": "因子中性"}}
+        a360 = {"inference": {"score": 10, "score_5d": 10, "score_60d": 10}}
+        ts = {
+            "method": "gluonts_tft",
+            "score": 10,
+            "oos_passed": True,
+            "quantiles": {"uncertainty": "宽", "band_width_pct": 0.1},
+        }
+        v = build_quant_verdict(a158, a360, ts_forecast=ts)
+        self.assertIn("区间较宽", v["detail"])
+
     def test_verdict_timeseries_resonance(self) -> None:
         a158 = {"inference": {"score": 30, "verdict": "因子偏多"}}
         a360 = {

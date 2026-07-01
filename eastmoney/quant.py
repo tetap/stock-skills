@@ -138,6 +138,10 @@ def build_quant_verdict(
         if ts_oos is False:
             detail = f"{detail}（{ts_label} 未过 OOS，时序信号仅辅助）"
 
+        q = ts_forecast.get("quantiles") or {}
+        if q.get("uncertainty") == "宽":
+            detail = f"{detail} {ts_label} 预测区间较宽（P10~P90 {q.get('band_width_pct', 0):.1%}），宜降仓或观望。"
+
     result: dict[str, Any] = {
         "summary": summary,
         "detail": detail.strip(),
@@ -163,6 +167,7 @@ def build_quant_verdict(
             "verdict": ts_forecast.get("verdict"),
             "implied_return": ts_forecast.get("implied_return"),
             "oos_passed": ts_forecast.get("oos_passed"),
+            "quantiles": ts_forecast.get("quantiles"),
         }
     return result
 

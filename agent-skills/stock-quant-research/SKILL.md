@@ -6,7 +6,7 @@
 |------|------------|------|
 | L0 研究观点 | `/stock 分析` + review-protocol | 多轮审核的研究结论，**不是**回测收益承诺 |
 | L1 因子/信号 | Alpha158/360 + quant_verdict | 须 OOS 检验 + 阈值网格 |
-| L2 回测 | `scripts/backtest_quant.py` | IS 搜参 → OOS 验证 |
+| L2 回测 | `backtest_quant.py` / `walk_forward_quant.py` | IS 搜参 → OOS；walk-forward 多 fold 验证 |
 | L3 模拟盘 | 未实现 | Python 成交逻辑须与 L2 逐笔拟合 |
 | L4 实盘 | 未实现 | API 切换前再跑一轮模拟 |
 
@@ -42,6 +42,13 @@ python scripts/train_quant_models.py --lgb --limit 500 --grid
 
 # 单股 long-only 回测 + 阈值网格
 python scripts/backtest_quant.py --secid 0.300204 --grid-thresholds
+
+# LGB 模型信号回测（需 models/alpha158_lgb.txt）
+python scripts/backtest_quant.py --secid 1.600519 --method lgb --grid-thresholds
+
+# Walk-forward 滚动 OOS（5 fold，IS 搜阈值 → 每 fold OOS）
+python scripts/walk_forward_quant.py --secid 0.300204 --folds 5
+python scripts/walk_forward_quant.py --secid 1.600519 --method lgb --folds 5
 
 # 查看 OOS 是否通过
 cat models/alpha158_lgb.metrics.json
